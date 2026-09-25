@@ -1,8 +1,16 @@
 import { redirect } from "next/navigation";
-import { getCurrentProfile } from "@/lib/auth/session";
+import { getCurrentAuthContext } from "@/lib/auth/session";
 
 export default async function HomePage() {
-  const profile = await getCurrentProfile();
+  const context = await getCurrentAuthContext();
 
-  redirect(profile?.is_active ? "/dashboard" : "/login");
+  if (!context || !context.profile.is_active) {
+    redirect("/login");
+  }
+
+  if (context.profile.is_system_admin || context.membership?.is_active) {
+    redirect("/dashboard");
+  }
+
+  redirect("/no-organization-access");
 }

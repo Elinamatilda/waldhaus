@@ -21,10 +21,18 @@ export async function loginAction(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
+
+  if (process.env.NODE_ENV === "development") {
+    console.info("[auth][login] signInWithPassword_result", {
+      success: !error,
+      hasUser: Boolean(data.user),
+      hasSession: Boolean(data.session),
+    });
+  }
 
   if (error) {
     return {

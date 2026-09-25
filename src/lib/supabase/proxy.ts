@@ -34,7 +34,23 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (process.env.NODE_ENV === "development") {
+    const cookieNames = request.cookies.getAll().map((cookie) => cookie.name);
+    const hasSupabaseAuthCookie = cookieNames.some((name) =>
+      name.startsWith("sb-") && name.endsWith("-auth-token"),
+    );
+
+    console.info("[auth][proxy] getUser_result", {
+      hasUser: Boolean(user),
+      hasAuthCookie: hasSupabaseAuthCookie,
+      hasError: Boolean(error),
+    });
+  }
 
   return response;
 }
