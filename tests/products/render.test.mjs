@@ -7,6 +7,7 @@ const component=tag=>function Mock({children,...props}){return React.createEleme
 const ui={Button:component('button'),Card:component('div'),Dialog:()=>null,EmptyState:({title,description})=>React.createElement('p',null,title,description),FormField:component('label'),Input:component('input'),Select:component('select'),Textarea:component('textarea'),StatusBadge:({children})=>React.createElement('span',null,children),SectionHeader:({title,actions})=>React.createElement('header',null,React.createElement('h2',null,title),actions),Table:component('table'),TableHeader:component('thead'),TableBody:component('tbody'),TableRow:component('tr'),TableCell:component('td')};
 const Manager=loadModule('src/components/sales/product-master-manager.tsx',{
  react:React,'next/navigation':{useRouter:()=>({refresh(){}})},'next/link':component('a'),
+ './product-species-selector':{ProductSpeciesSelector:()=>null},
  './mutation-form':{SalesMutationForm:component('form')},
  '@/app/actions/product-master':{saveProductMasterAction:async()=>({ok:true})},
  '@/components/ui':ui,
@@ -60,7 +61,8 @@ test('nested editors bind parent ids, preserve version tokens and exclude legacy
   const Editor=loadModule('src/components/sales/product-master-manager.tsx',{
    react:{...React,useTransition:()=>[false,()=>{}],useState:initial=>[initial===null?editor:initial,()=>{}]},
    'next/navigation':{useRouter:()=>({refresh(){}})},'next/link':component('a'),
-   './mutation-form':{SalesMutationForm:({children})=>React.createElement('form',null,children)},
+   './product-species-selector':{ProductSpeciesSelector:()=>null},
+ './mutation-form':{SalesMutationForm:({children})=>React.createElement('form',null,children)},
    '@/app/actions/product-master':{saveProductMasterAction:async()=>({ok:true})},
    '@/components/ui':{...ui,Dialog:({open,children})=>open?React.createElement('section',null,children):null,FormField:({children})=>React.createElement('div',null,children)},
   }).ProductMasterManager;

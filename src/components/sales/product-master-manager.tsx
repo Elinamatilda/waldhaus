@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Card, Dialog, EmptyState, FormField, Input, Select, SectionHeader, StatusBadge, Table, TableBody, TableCell, TableHeader, TableRow, Textarea } from '@/components/ui';
+import { ProductSpeciesSelector } from './product-species-selector';
 import { SalesMutationForm } from './mutation-form';
 import { saveProductMasterAction } from '@/app/actions/product-master';
 import { MASTER_FIELDS, PRICE_UNITS, PRODUCT_UNITS, type MasterEntity } from '@/lib/products/model';
@@ -89,10 +90,13 @@ export function ProductMasterManager({organizationId, locale, definition, lookup
       </Card>
       <Card className="space-y-4">
         <SectionHeader title={text('lookups')} />
+        <ProductSpeciesSelector organizationId={organizationId} productId={product.id} productName={product.name} productActive={product.is_active} locale={locale}
+          selected={definition.offered_wood_species ?? null}
+          options={lookups.wood_species.map(row => ({id: row.id, name: String(row[`name_${locale}`]), is_active: Boolean(row.is_active)}))} />
         <p className="text-body-small text-text-secondary">{text('lookupHint')}</p>
         {(['wood_species', 'construction_types'] as const).map(entity => <details key={entity}>
-          <summary className="cursor-pointer text-section-title">{label(entity)} ({lookups[entity].length})</summary>
-          <div className="space-y-3 py-3"><Button variant="secondary" disabled={refreshing} onClick={() => open(entity, null)}>{label('add')} · {label(entity)}</Button>
+          <summary className="cursor-pointer text-section-title">{entity === 'wood_species' ? text('manageSpeciesCatalogue') : label(entity)} ({lookups[entity].length})</summary>
+          <div className="space-y-3 py-3"><Button variant="secondary" disabled={refreshing} onClick={() => open(entity, null)}>{entity === 'wood_species' ? text('addCatalogueSpecies') : `${label('add')} · ${label(entity)}`}</Button>
             {lookups[entity].map(row => <div key={row.id} className="flex flex-wrap items-center justify-between gap-3"><p>{String(row[`name_${locale}`])} · {String(row.code)} {status(Boolean(row.is_active))}</p>{actions(entity, row)}</div>)}
           </div>
         </details>)}

@@ -163,3 +163,21 @@ test('variant counts page through all variants, include archives and preserve ze
  assert.equal(requests.length,2);
  assert.ok(requests.every(url=>url.searchParams.get('select')==='id,product_id'));
 });
+
+test('offered product species are independent of physical variants and scoped to the product',async()=>{
+ const data=dataset();const birchId=uid(81);
+ data.wood_species.push({...data.wood_species[0],id:birchId,code:'birch',name_fi:'Koivu',name_pl:'Brzoza',name_en:'Birch'});
+ data.product_wood_species=[{id:uid(82),organization_id:org,product_id:productId,wood_species_id:speciesId},{id:uid(83),organization_id:org,product_id:productId,wood_species_id:birchId},{id:uid(84),organization_id:org,product_id:uid(99),wood_species_id:birchId}];
+ const {service}=fixture({data});
+ const result=await service.getProductMasterDefinition(org,productId,'fi');
+ assert.deepEqual(result.offered_wood_species.map(row=>row.name),['Tammi','Koivu']);
+ assert.equal(result.variants.length,1);assert.equal(result.variants[0].wood_species.id,speciesId);
+ data.product_variants=[];
+ const empty=await fixture({data}).service.getProductMasterDefinition(org,productId,'pl');
+ assert.deepEqual(empty.offered_wood_species.map(row=>row.name),['Dąb','Brzoza']);assert.equal(empty.variants.length,0);
+});
+test('missing product species migration is explicit, while existing master details still load',async()=>{
+ const {service}=fixture({errorTable:'product_wood_species'});
+ const result=await service.getProductMasterDefinition(org,productId,'en');
+ assert.equal(result.offered_wood_species,null);assert.equal(result.variants.length,1);
+});

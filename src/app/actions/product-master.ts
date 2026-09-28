@@ -2,9 +2,28 @@
 import { revalidatePath } from 'next/cache';
 import { getRequestLocale } from '@/lib/i18n/locale';
 import { tApp } from '@/lib/i18n/app-ui';
+import { tProduct } from '@/lib/i18n/product-master-ui';
 import { MASTER_FIELDS, ProductInputError, type MasterEntity } from '@/lib/products/model';
-import { archiveProductMaster, saveProductMaster } from '@/lib/products/service';
+import { archiveProductMaster, saveProductMaster, saveProductWoodSpecies } from '@/lib/products/service';
 import type { MutationResult } from '@/lib/sales/validation';
+
+export async function saveProductWoodSpeciesAction(form:FormData):Promise<MutationResult> {
+  const locale=await getRequestLocale();
+  try {
+    // Empty repeated fields represent an explicit empty selection, not a missing form.
+    if(form.get('selection_present')!=='true')throw new ProductInputError('Missing selection');
+    await saveProductWoodSpecies(String(form.get('organization_id')??''),String(form.get('product_id')??''),
+      form.getAll('expected_species_ids'),form.getAll('wood_species_ids'));
+    revalidatePath('/sales/products','layout');
+    return {ok:true};
+  } catch(error) {
+    const dbCode=error&&typeof error==='object'&&'databaseCode' in error?String(error.databaseCode):'';
+    const code=error&&typeof error==='object'&&'digest' in error||dbCode==='42501'?'FORBIDDEN':
+      ['40001','23505','40P01'].includes(dbCode)?'CONFLICT':error instanceof ProductInputError||dbCode.startsWith('22')||dbCode.startsWith('23')?'VALIDATION_ERROR':'DATABASE_ERROR';
+    return {ok:false,code,message:['PGRST202','42P01','42883'].includes(dbCode)?tProduct(locale,'speciesUnavailable'):
+      code==='CONFLICT'?tProduct(locale,'speciesConflict'):tApp(locale,code==='FORBIDDEN'?'productMaster.forbidden':code==='VALIDATION_ERROR'?'productMaster.invalid':'productMaster.failed')};
+  }
+}
 
 export async function saveProductMasterAction(form:FormData):Promise<MutationResult> {
   const locale=await getRequestLocale();

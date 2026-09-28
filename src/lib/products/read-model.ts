@@ -43,6 +43,8 @@ export type ProductVariantDefinition = Omit<VariantRecord,'thickness_mm'|'width_
 };
 export type ProductMasterDefinition = {
   product:ProductRecord;variants:ProductVariantDefinition[];locale:AppLocale;as_of:string;
+  /** Product-family offering, not a mixed-species variant. Null means migration unavailable. */
+  offered_wood_species:Named<SpeciesRecord>[]|null;
 };
 
 export type ProductReadRecords = {

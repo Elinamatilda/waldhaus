@@ -46,9 +46,20 @@ export async function getProductMasterDefinition(
 
   const [product]=await read('products','id',[productKey]);
   if(!product)return null;
+  let offeredIds:string[]|null=[];
+  for(let page=0;;page++){
+    const {data,error}=await db.from('product_wood_species').select('wood_species_id')
+      .eq('organization_id',organizationId).eq('product_id',product.id).order('wood_species_id').range(page*200,page*200+199);
+    if(error){
+      if(['42P01','PGRST205'].includes(error.code)){offeredIds=null;break;}
+      fail(error.code);
+    }
+    offeredIds.push(...(data??[]).map(row=>String(row.wood_species_id)));
+    if(!data||data.length<200)break;
+  }
   const variants=await read('product_variants','product_id',[product.id]);
   const [species,constructions,relationships]=await Promise.all([
-    read('wood_species','id',unique(variants.map(row=>row.wood_species_id))),
+    read('wood_species','id',unique([...variants.map(row=>row.wood_species_id),...(offeredIds??[])])),
     read('construction_types','id',unique(variants.map(row=>row.construction_type_id))),
     read('customer_products','product_variant_id',variants.map(row=>row.id)),
   ]);
@@ -68,7 +79,9 @@ export async function getProductMasterDefinition(
   const customersById=new Map(customers.map(row=>[row.id,row]));
   const unitsByCode=new Map(units.map(row=>[row.code,row]));
   const unit=(code:string|null)=>code===null?null:named(reference(unitsByCode,code));
-  return {product,locale,as_of:asOf,variants:variants.map(row=>{
+  return {product,locale,as_of:asOf,
+    offered_wood_species:offeredIds===null?null:offeredIds.map(id=>named(reference(speciesById,id))),
+    variants:variants.map(row=>{
     const {thickness_mm,width_mm,length_mm,depth_mm,volume_per_unit_m3,...identity}=row;
     const dimensions={thickness_mm,width_mm,length_mm};
     return {...identity,dimensions,

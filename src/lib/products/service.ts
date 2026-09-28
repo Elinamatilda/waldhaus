@@ -40,6 +40,22 @@ export async function loadProductLookups(org:string) {
   ]);
   return {wood_species,construction_types};
 }
+export async function saveProductWoodSpecies(org:string,productId:string,expected:unknown[],selected:unknown[]) {
+  await requireProductOrganization(org);
+  const product=identifier(productId)!;
+  const ids=(values:unknown[])=>{
+    if(!Array.isArray(values)||values.length>100)throw new ProductInputError('Invalid species selection');
+    const parsed=values.map(value=>identifier(value)!);
+    if(new Set(parsed).size!==parsed.length)throw new ProductInputError('Duplicate species');
+    return parsed.sort();
+  };
+  const expectedIds=ids(expected),selectedIds=ids(selected);
+  const db=await createClient();
+  const {error}=await db.rpc('save_product_wood_species',{
+    p_organization:org,p_product:product,p_expected:expectedIds,p_selected:selectedIds,
+  });
+  if(error)throw Object.assign(new Error('Product species save failed'),{databaseCode:error.code});
+}
 export async function listProductMasters(organizationId:string,entity:MasterEntity,filter?:{product_id?:string;customer_id?:string;customer_product_id?:string}) {
   await requireProductOrganization(organizationId);
   if(!Object.hasOwn(MASTER_FIELDS,entity))throw new ProductInputError('Unknown entity');
