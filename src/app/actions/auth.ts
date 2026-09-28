@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAuthApiError } from "@supabase/supabase-js";
+import { isInvalidSessionError } from "@/lib/auth/verified-user";
 
 export type LoginFormState = {
   error: string | null;
@@ -35,9 +37,11 @@ export async function loginAction(
   }
 
   if (error) {
-    return {
-      error: "Invalid email or password.",
-    };
+    if (isAuthApiError(error) && error.status >= 400 && error.status < 500 &&
+      ["invalid_credentials", "email_not_confirmed", "phone_not_confirmed", "user_banned"].includes(error.code ?? "")) {
+      return { error: "Invalid email or password." };
+    }
+    throw new Error("Sign-in verification failed.", { cause: error });
   }
 
   redirect("/dashboard");
@@ -46,7 +50,10 @@ export async function loginAction(
 export async function logoutAction() {
   const supabase = await createClient();
 
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+  if (error && !isInvalidSessionError(error)) {
+    throw new Error("Sign-out failed.", { cause: error });
+  }
 
   redirect("/login");
 }

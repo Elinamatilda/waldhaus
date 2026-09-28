@@ -1,36 +1,14 @@
-import { headers } from "next/headers";
+import "server-only";
 
-export const SUPPORTED_LOCALES = ["fi", "pl", "en"] as const;
+import { cache } from "react";
+import { cookies } from "next/headers";
+import { DEFAULT_LOCALE, isAppLocale, LOCALE_COOKIE, type AppLocale } from "./config";
 
-export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
+export { SUPPORTED_LOCALES, type AppLocale } from "./config";
 
-function normalizeLocale(raw: string | null | undefined): AppLocale | null {
-  if (!raw) {
-    return null;
-  }
-
-  const token = raw.toLowerCase().split("-")[0]?.trim();
-
-  if (token === "fi" || token === "pl" || token === "en") {
-    return token;
-  }
-
-  return null;
-}
-
-export async function getRequestLocale(): Promise<AppLocale> {
-  const headerStore = await headers();
-  const cookieLocale = normalizeLocale(headerStore.get("x-waldhaus-locale"));
-
-  if (cookieLocale) {
-    return cookieLocale;
-  }
-
-  const acceptLanguage = headerStore.get("accept-language") ?? "";
-  const candidates = acceptLanguage
-    .split(",")
-    .map((part) => normalizeLocale(part.split(";")[0]))
-    .filter((value): value is AppLocale => value !== null);
-
-  return candidates[0] ?? "en";
-}
+// Shared by layouts and pages; browser language never overrides the initial locale.
+export const getRequestLocale = cache(async (): Promise<AppLocale> => {
+  const cookieStore = await cookies();
+  const preference = cookieStore.get(LOCALE_COOKIE)?.value;
+  return isAppLocale(preference) ? preference : DEFAULT_LOCALE;
+});

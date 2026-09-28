@@ -1,9 +1,12 @@
 "use client";
 
+import { SalesMutationForm } from "./mutation-form";
 import { useState } from "react";
 import Link from "next/link";
 import {
   Button,
+  Card,
+  SearchInput,
   Dialog,
   FormField,
   Input,
@@ -17,6 +20,9 @@ import {
 } from "@/components/ui";
 import { createCustomerAction, toggleCustomerActiveAction, updateCustomerAction } from "@/app/(authenticated)/sales/actions";
 import type { AppLocale } from "@/lib/i18n/locale";
+import { tApp } from '@/lib/i18n/app-ui';
+import { customerSalesLink } from '@/lib/sales/customer-share';
+import type { ScenarioCode } from '@/lib/sales/service';
 import { tSales } from "@/lib/i18n/sales-ui";
 
 type CustomerRow = {
@@ -31,25 +37,31 @@ export function CustomersManager({
   locale,
   rows,
   organizationId,
-  isSystemAdmin,
+  year,
+  scenario,
 }: {
   locale: AppLocale;
   rows: CustomerRow[];
   organizationId: string;
   isSystemAdmin: boolean;
+  year?: number;
+  scenario?: ScenarioCode;
 }) {
+  const [search, setSearch] = useState('');
+  const [archiving, setArchiving] = useState<CustomerRow | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<CustomerRow | null>(null);
 
   return (
     <>
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <FormField label={tApp(locale, 'customerAnalysis.masterSearch')} htmlFor="customer-master-search"><SearchInput id="customer-master-search" value={search} onChange={event => setSearch(event.target.value)} /></FormField>
         <Button variant="primary" onClick={() => setCreateOpen(true)}>
           {tSales(locale, "sales.add")}
         </Button>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface-raised p-0">
+      <Card className="min-w-0 overflow-x-auto p-0">
         <Table>
           <TableHeader>
             <tr>
@@ -57,16 +69,16 @@ export function CustomersManager({
               <th className="px-4 py-3 text-left">{tSales(locale, "sales.code")}</th>
               <th className="px-4 py-3 text-left">{tSales(locale, "sales.status")}</th>
               <th className="px-4 py-3 text-left">{tSales(locale, "sales.notes")}</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-4 py-3 text-right">{tSales(locale, 'sales.actions')}</th>
             </tr>
           </TableHeader>
           <TableBody>
-            {rows.map((row) => (
+            {rows.filter(row => `${row.name} ${row.customer_code ?? ''}`.toLocaleLowerCase(locale).includes(search.trim().toLocaleLowerCase(locale))).map((row) => (
               <TableRow key={row.id}>
                 <TableCell>
                   <Link
-                    className="text-primary hover:underline"
-                    href={`/sales/customers/${row.id}${isSystemAdmin ? `?org=${organizationId}` : ""}`}
+                    className="rounded-sm text-primary hover:underline focus-visible:outline-2 focus-visible:outline-focus-ring"
+                    href={year ? customerSalesLink(year, row.id, scenario) : `/sales/customers/${row.id}`}
                   >
                     {row.name}
                   </Link>
@@ -79,9 +91,9 @@ export function CustomersManager({
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button variant="secondary" onClick={() => setEditing(row)}>
-                      Edit
+                      {tSales(locale, 'sales.edit')}
                     </Button>
-                    <form action={toggleCustomerActiveAction}>
+                    {row.is_active ? <Button variant="ghost" onClick={() => setArchiving(row)}>{tSales(locale, 'sales.archived')}</Button> : (                    <SalesMutationForm action={toggleCustomerActiveAction}>
                       <input type="hidden" name="organization_id" value={organizationId} />
                       <input type="hidden" name="customer_id" value={row.id} />
                       <input
@@ -92,14 +104,24 @@ export function CustomersManager({
                       <Button type="submit" variant="ghost">
                         {row.is_active ? tSales(locale, "sales.archived") : tSales(locale, "sales.active")}
                       </Button>
-                    </form>
+                    </SalesMutationForm>)}
+
                   </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </div>
+      </Card>
+
+      <Dialog open={archiving !== null} title={tSales(locale, 'sales.archived')} description={tApp(locale, 'customerAnalysis.archiveConfirm').replace('{name}', archiving?.name ?? '')} onClose={() => setArchiving(null)}>
+        {archiving ? <SalesMutationForm action={toggleCustomerActiveAction} onSuccess={() => setArchiving(null)}>
+          <input type="hidden" name="organization_id" value={organizationId} />
+          <input type="hidden" name="customer_id" value={archiving.id} />
+          <input type="hidden" name="next_state" value="archived" />
+          <div className="flex justify-end gap-2"><Button type="button" variant="ghost" onClick={() => setArchiving(null)}>{tApp(locale, 'customerAnalysis.cancel')}</Button><Button type="submit" variant="destructive">{tSales(locale, 'sales.archived')}</Button></div>
+        </SalesMutationForm> : null}
+      </Dialog>
 
       <Dialog
         open={createOpen}
@@ -107,11 +129,9 @@ export function CustomersManager({
         description={tSales(locale, "sales.customers")}
         onClose={() => setCreateOpen(false)}
       >
-        <form
-          action={async (formData) => {
-            await createCustomerAction(formData);
-            setCreateOpen(false);
-          }}
+        <SalesMutationForm
+          action={createCustomerAction}
+          onSuccess={() => setCreateOpen(false)}
           className="space-y-3"
         >
           <input type="hidden" name="organization_id" value={organizationId} />
@@ -127,21 +147,19 @@ export function CustomersManager({
           <div className="flex justify-end">
             <Button type="submit">{tSales(locale, "sales.save")}</Button>
           </div>
-        </form>
+        </SalesMutationForm>
       </Dialog>
 
       <Dialog
         open={Boolean(editing)}
-        title="Edit customer"
+        title={tApp(locale, 'customerAnalysis.editCustomer')}
         description={editing?.name}
         onClose={() => setEditing(null)}
       >
         {editing ? (
-          <form
-            action={async (formData) => {
-              await updateCustomerAction(formData);
-              setEditing(null);
-            }}
+          <SalesMutationForm
+            action={updateCustomerAction}
+            onSuccess={() => setEditing(null)}
             className="space-y-3"
           >
             <input type="hidden" name="organization_id" value={organizationId} />
@@ -164,7 +182,7 @@ export function CustomersManager({
             <div className="flex justify-end">
               <Button type="submit">{tSales(locale, "sales.save")}</Button>
             </div>
-          </form>
+          </SalesMutationForm>
         ) : null}
       </Dialog>
     </>

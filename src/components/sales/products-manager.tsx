@@ -1,13 +1,18 @@
 "use client";
 
+import { SalesMutationForm } from "./mutation-form";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import { tProduct } from '@/lib/i18n/product-master-ui';
+import { tApp } from '@/lib/i18n/app-ui';
 import {
   Button,
+  Card,
+  StatusBadge,
   Dialog,
   FormField,
   Input,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -25,6 +30,7 @@ type ProductRow = {
   name: string;
   is_active: boolean;
   description: string | null;
+  variant_count?: number;
 };
 
 export function ProductsManager({
@@ -32,32 +38,37 @@ export function ProductsManager({
   rows,
   organizationId,
   isSystemAdmin,
+  detailOnly = false,
 }: {
   locale: AppLocale;
   rows: ProductRow[];
   organizationId: string;
   isSystemAdmin: boolean;
+  detailOnly?: boolean;
 }) {
+  const router = useRouter();
+  const [archiving, setArchiving] = useState<ProductRow | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<ProductRow | null>(null);
 
   return (
     <>
+      {detailOnly ? <Button variant="secondary" onClick={() => setEditing(rows[0])}>{tProduct(locale, 'editProduct')}</Button> : <>
       <div className="flex justify-end">
         <Button variant="primary" onClick={() => setCreateOpen(true)}>
           {tSales(locale, "sales.add")}
         </Button>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface-raised p-0">
+      <Card className="overflow-x-auto p-0">
         <Table>
           <TableHeader>
             <tr>
               <th className="px-4 py-3 text-left">{tSales(locale, "sales.name")}</th>
               <th className="px-4 py-3 text-left">{tSales(locale, "sales.code")}</th>
               <th className="px-4 py-3 text-left">{tSales(locale, "sales.status")}</th>
-              <th className="px-4 py-3 text-left">{tSales(locale, "sales.description")}</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-4 py-3 text-left">{tProduct(locale, "variantCount")}</th>
+              <th className="px-4 py-3 text-right">{tProduct(locale, "actions")}</th>
             </tr>
           </TableHeader>
           <TableBody>
@@ -73,33 +84,25 @@ export function ProductsManager({
                 </TableCell>
                 <TableCell>{row.product_code ?? "-"}</TableCell>
                 <TableCell>
-                  {row.is_active ? tSales(locale, "sales.active") : tSales(locale, "sales.archived")}
+                  <StatusBadge status={row.is_active ? "success" : "neutral"}>{row.is_active ? tSales(locale, "sales.active") : tSales(locale, "sales.archived")}</StatusBadge>
                 </TableCell>
-                <TableCell>{row.description ?? "-"}</TableCell>
+                <TableCell>{row.variant_count ?? 0}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button variant="secondary" onClick={() => setEditing(row)}>
-                      Edit
+                      {tApp(locale, "productMaster.edit")}
                     </Button>
-                    <form action={toggleProductActiveAction}>
-                      <input type="hidden" name="organization_id" value={organizationId} />
-                      <input type="hidden" name="product_id" value={row.id} />
-                      <input
-                        type="hidden"
-                        name="next_state"
-                        value={row.is_active ? "archived" : "active"}
-                      />
-                      <Button type="submit" variant="ghost">
-                        {row.is_active ? tSales(locale, "sales.archived") : tSales(locale, "sales.active")}
-                      </Button>
-                    </form>
+                    <Button variant="ghost" onClick={() => setArchiving(row)}>
+                      {tApp(locale, row.is_active ? 'productMaster.archive' : 'productMaster.active')}
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </div>
+      </Card>
+      </>}
 
       <Dialog
         open={createOpen}
@@ -107,64 +110,69 @@ export function ProductsManager({
         description={tSales(locale, "sales.products")}
         onClose={() => setCreateOpen(false)}
       >
-        <form
-          action={async (formData) => {
-            await createProductAction(formData);
-            setCreateOpen(false);
-          }}
+        <SalesMutationForm
+          locale={locale}
+          action={createProductAction}
+          onSuccess={result => { setCreateOpen(false); if(result.id) router.push(`/sales/products/${result.id}`); }}
           className="space-y-3"
         >
           <input type="hidden" name="organization_id" value={organizationId} />
-          <FormField label={tSales(locale, "sales.name")}>
-            <Input name="name" required />
+          <FormField label={tSales(locale, "sales.name")} htmlFor="create-product-name">
+            <Input id="create-product-name" name="name" required />
           </FormField>
-          <FormField label={tSales(locale, "sales.code")}>
-            <Input name="product_code" />
+          <FormField label={tSales(locale, "sales.code")} htmlFor="create-product-product_code">
+            <Input id="create-product-product_code" name="product_code" />
           </FormField>
-          <FormField label={tSales(locale, "sales.description")}>
-            <Textarea name="description" rows={3} />
+          <FormField label={tSales(locale, "sales.description")} htmlFor="create-product-description">
+            <Textarea id="create-product-description" name="description" rows={3} />
           </FormField>
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>{tApp(locale, 'productMaster.cancel')}</Button>
             <Button type="submit">{tSales(locale, "sales.save")}</Button>
           </div>
-        </form>
+        </SalesMutationForm>
+      </Dialog>
+
+      <Dialog open={!!archiving} title={tApp(locale, archiving?.is_active ? 'productMaster.archive' : 'productMaster.active')} description={archiving?.is_active ? tApp(locale, 'productMaster.archiveConfirm') : archiving?.name} onClose={() => setArchiving(null)}>
+        {archiving ? <SalesMutationForm locale={locale} action={toggleProductActiveAction} onSuccess={() => setArchiving(null)} className="space-y-3">
+          <input type="hidden" name="organization_id" value={organizationId} />
+          <input type="hidden" name="product_id" value={archiving.id} />
+          <input type="hidden" name="next_state" value={archiving.is_active ? 'archived' : 'active'} />
+          <Button type="button" variant="secondary" onClick={() => setArchiving(null)}>{tApp(locale, 'productMaster.cancel')}</Button>
+          <Button type="submit">{tApp(locale, archiving.is_active ? 'productMaster.archive' : 'productMaster.active')}</Button>
+        </SalesMutationForm> : null}
       </Dialog>
 
       <Dialog
         open={Boolean(editing)}
-        title="Edit product"
+        title={tProduct(locale, "editProduct")}
         description={editing?.name}
         onClose={() => setEditing(null)}
       >
         {editing ? (
-          <form
-            action={async (formData) => {
-              await updateProductAction(formData);
-              setEditing(null);
-            }}
+          <SalesMutationForm
+          locale={locale}
+            action={updateProductAction}
+            onSuccess={() => setEditing(null)}
             className="space-y-3"
           >
             <input type="hidden" name="organization_id" value={organizationId} />
             <input type="hidden" name="product_id" value={editing.id} />
-            <FormField label={tSales(locale, "sales.name")}>
-              <Input name="name" required defaultValue={editing.name} />
+            <FormField label={tSales(locale, "sales.name")} htmlFor="edit-product-name">
+              <Input id="edit-product-name" name="name" required defaultValue={editing.name} />
             </FormField>
-            <FormField label={tSales(locale, "sales.code")}>
-              <Input name="product_code" defaultValue={editing.product_code ?? ""} />
+            <FormField label={tSales(locale, "sales.code")} htmlFor="edit-product-product_code">
+              <Input id="edit-product-product_code" name="product_code" defaultValue={editing.product_code ?? ""} />
             </FormField>
-            <FormField label={tSales(locale, "sales.description")}>
-              <Textarea name="description" rows={3} defaultValue={editing.description ?? ""} />
+            <FormField label={tSales(locale, "sales.description")} htmlFor="edit-product-description">
+              <Textarea id="edit-product-description" name="description" rows={3} defaultValue={editing.description ?? ""} />
             </FormField>
-            <FormField label={tSales(locale, "sales.status")}>
-              <Select name="is_active" defaultValue={editing.is_active ? "true" : "false"}>
-                <option value="true">{tSales(locale, "sales.active")}</option>
-                <option value="false">{tSales(locale, "sales.archived")}</option>
-              </Select>
-            </FormField>
-            <div className="flex justify-end">
+            <input type="hidden" name="is_active" value={String(editing.is_active)} />
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="secondary" onClick={() => setEditing(null)}>{tApp(locale, 'productMaster.cancel')}</Button>
               <Button type="submit">{tSales(locale, "sales.save")}</Button>
             </div>
-          </form>
+          </SalesMutationForm>
         ) : null}
       </Dialog>
     </>

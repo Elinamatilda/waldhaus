@@ -1,0 +1,2947 @@
+{
+  "indexes": [
+    {
+      "name": "customers_pkey",
+      "table": "customers",
+      "definition": "CREATE UNIQUE INDEX customers_pkey ON public.customers USING btree (id)"
+    },
+    {
+      "name": "customers_unique_org_code",
+      "table": "customers",
+      "definition": "CREATE UNIQUE INDEX customers_unique_org_code ON public.customers USING btree (organization_id, customer_code)"
+    },
+    {
+      "name": "customers_unique_org_id",
+      "table": "customers",
+      "definition": "CREATE UNIQUE INDEX customers_unique_org_id ON public.customers USING btree (organization_id, id)"
+    },
+    {
+      "name": "customers_unique_org_name",
+      "table": "customers",
+      "definition": "CREATE UNIQUE INDEX customers_unique_org_name ON public.customers USING btree (organization_id, name)"
+    },
+    {
+      "name": "organization_members_pkey",
+      "table": "organization_members",
+      "definition": "CREATE UNIQUE INDEX organization_members_pkey ON public.organization_members USING btree (id)"
+    },
+    {
+      "name": "organization_members_role_id_idx",
+      "table": "organization_members",
+      "definition": "CREATE INDEX organization_members_role_id_idx ON public.organization_members USING btree (role_id)"
+    },
+    {
+      "name": "organization_members_unique_org_user",
+      "table": "organization_members",
+      "definition": "CREATE UNIQUE INDEX organization_members_unique_org_user ON public.organization_members USING btree (organization_id, user_id)"
+    },
+    {
+      "name": "organizations_pkey",
+      "table": "organizations",
+      "definition": "CREATE UNIQUE INDEX organizations_pkey ON public.organizations USING btree (id)"
+    },
+    {
+      "name": "organizations_slug_key",
+      "table": "organizations",
+      "definition": "CREATE UNIQUE INDEX organizations_slug_key ON public.organizations USING btree (slug)"
+    },
+    {
+      "name": "product_variants_pkey",
+      "table": "product_variants",
+      "definition": "CREATE UNIQUE INDEX product_variants_pkey ON public.product_variants USING btree (id)"
+    },
+    {
+      "name": "product_variants_unique_org_code",
+      "table": "product_variants",
+      "definition": "CREATE UNIQUE INDEX product_variants_unique_org_code ON public.product_variants USING btree (organization_id, variant_code)"
+    },
+    {
+      "name": "product_variants_unique_org_id",
+      "table": "product_variants",
+      "definition": "CREATE UNIQUE INDEX product_variants_unique_org_id ON public.product_variants USING btree (organization_id, id)"
+    },
+    {
+      "name": "product_variants_unique_org_id_customer_id_idx",
+      "table": "product_variants",
+      "definition": "CREATE UNIQUE INDEX product_variants_unique_org_id_customer_id_idx ON public.product_variants USING btree (organization_id, id, customer_id)"
+    },
+    {
+      "name": "product_variants_unique_org_id_product_id",
+      "table": "product_variants",
+      "definition": "CREATE UNIQUE INDEX product_variants_unique_org_id_product_id ON public.product_variants USING btree (organization_id, id, product_id)"
+    },
+    {
+      "name": "products_pkey",
+      "table": "products",
+      "definition": "CREATE UNIQUE INDEX products_pkey ON public.products USING btree (id)"
+    },
+    {
+      "name": "products_unique_org_code",
+      "table": "products",
+      "definition": "CREATE UNIQUE INDEX products_unique_org_code ON public.products USING btree (organization_id, product_code)"
+    },
+    {
+      "name": "products_unique_org_id",
+      "table": "products",
+      "definition": "CREATE UNIQUE INDEX products_unique_org_id ON public.products USING btree (organization_id, id)"
+    },
+    {
+      "name": "products_unique_org_name",
+      "table": "products",
+      "definition": "CREATE UNIQUE INDEX products_unique_org_name ON public.products USING btree (organization_id, name)"
+    },
+    {
+      "name": "profiles_pkey",
+      "table": "profiles",
+      "definition": "CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id)"
+    },
+    {
+      "name": "roles_code_key",
+      "table": "roles",
+      "definition": "CREATE UNIQUE INDEX roles_code_key ON public.roles USING btree (code)"
+    },
+    {
+      "name": "roles_pkey",
+      "table": "roles",
+      "definition": "CREATE UNIQUE INDEX roles_pkey ON public.roles USING btree (id)"
+    },
+    {
+      "name": "roles_scope_active_sort_idx",
+      "table": "roles",
+      "definition": "CREATE INDEX roles_scope_active_sort_idx ON public.roles USING btree (scope, is_active, sort_order, code)"
+    },
+    {
+      "name": "sales_facts_import_id_idx",
+      "table": "sales_facts",
+      "definition": "CREATE INDEX sales_facts_import_id_idx ON public.sales_facts USING btree (import_id) WHERE (import_id IS NOT NULL)"
+    },
+    {
+      "name": "sales_facts_org_customer_idx",
+      "table": "sales_facts",
+      "definition": "CREATE INDEX sales_facts_org_customer_idx ON public.sales_facts USING btree (organization_id, customer_id)"
+    },
+    {
+      "name": "sales_facts_org_period_idx",
+      "table": "sales_facts",
+      "definition": "CREATE INDEX sales_facts_org_period_idx ON public.sales_facts USING btree (organization_id, period_id)"
+    },
+    {
+      "name": "sales_facts_org_product_idx",
+      "table": "sales_facts",
+      "definition": "CREATE INDEX sales_facts_org_product_idx ON public.sales_facts USING btree (organization_id, product_id)"
+    },
+    {
+      "name": "sales_facts_pkey",
+      "table": "sales_facts",
+      "definition": "CREATE UNIQUE INDEX sales_facts_pkey ON public.sales_facts USING btree (id)"
+    },
+    {
+      "name": "sales_facts_unique_monthly_with_variant_idx",
+      "table": "sales_facts",
+      "definition": "CREATE UNIQUE INDEX sales_facts_unique_monthly_with_variant_idx ON public.sales_facts USING btree (organization_id, scenario_id, period_id, customer_id, product_id, product_variant_id) WHERE (product_variant_id IS NOT NULL)"
+    },
+    {
+      "name": "sales_facts_unique_monthly_without_variant_idx",
+      "table": "sales_facts",
+      "definition": "CREATE UNIQUE INDEX sales_facts_unique_monthly_without_variant_idx ON public.sales_facts USING btree (organization_id, scenario_id, period_id, customer_id, product_id) WHERE (product_variant_id IS NULL)"
+    },
+    {
+      "name": "sales_imports_org_imported_at_idx",
+      "table": "sales_imports",
+      "definition": "CREATE INDEX sales_imports_org_imported_at_idx ON public.sales_imports USING btree (organization_id, imported_at DESC)"
+    },
+    {
+      "name": "sales_imports_org_year_scenario_idx",
+      "table": "sales_imports",
+      "definition": "CREATE INDEX sales_imports_org_year_scenario_idx ON public.sales_imports USING btree (organization_id, year_number, scenario_id, imported_at DESC)"
+    },
+    {
+      "name": "sales_imports_pkey",
+      "table": "sales_imports",
+      "definition": "CREATE UNIQUE INDEX sales_imports_pkey ON public.sales_imports USING btree (id)"
+    },
+    {
+      "name": "sales_imports_unique_org_id",
+      "table": "sales_imports",
+      "definition": "CREATE UNIQUE INDEX sales_imports_unique_org_id ON public.sales_imports USING btree (organization_id, id)"
+    },
+    {
+      "name": "sales_periods_pkey",
+      "table": "sales_periods",
+      "definition": "CREATE UNIQUE INDEX sales_periods_pkey ON public.sales_periods USING btree (id)"
+    },
+    {
+      "name": "sales_periods_unique_org_id",
+      "table": "sales_periods",
+      "definition": "CREATE UNIQUE INDEX sales_periods_unique_org_id ON public.sales_periods USING btree (organization_id, id)"
+    },
+    {
+      "name": "sales_periods_unique_org_period",
+      "table": "sales_periods",
+      "definition": "CREATE UNIQUE INDEX sales_periods_unique_org_period ON public.sales_periods USING btree (organization_id, period_start)"
+    },
+    {
+      "name": "sales_scenarios_pkey",
+      "table": "sales_scenarios",
+      "definition": "CREATE UNIQUE INDEX sales_scenarios_pkey ON public.sales_scenarios USING btree (id)"
+    },
+    {
+      "name": "sales_scenarios_unique_org_code",
+      "table": "sales_scenarios",
+      "definition": "CREATE UNIQUE INDEX sales_scenarios_unique_org_code ON public.sales_scenarios USING btree (organization_id, code)"
+    },
+    {
+      "name": "sales_scenarios_unique_org_id",
+      "table": "sales_scenarios",
+      "definition": "CREATE UNIQUE INDEX sales_scenarios_unique_org_id ON public.sales_scenarios USING btree (organization_id, id)"
+    }
+  ],
+  "policies": [
+    {
+      "name": "customers_delete_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "customers",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "DELETE",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "customers_insert_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "customers",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "customers_select_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "customers",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "customers_update_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "customers",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "organization_members_delete_admin_or_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "organization_members",
+      "using": "can_admin_organization(organization_id)",
+      "schema": "public",
+      "command": "DELETE",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "organization_members_insert_admin_or_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "organization_members",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT",
+      "permissive": "PERMISSIVE",
+      "with_check": "(can_admin_organization(organization_id) AND (EXISTS ( SELECT 1\n   FROM roles r\n  WHERE ((r.id = organization_members.role_id) AND (r.scope = 'ORGANIZATION'::text) AND (r.is_active = true)))))"
+    },
+    {
+      "name": "organization_members_select_admin_or_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "organization_members",
+      "using": "can_admin_organization(organization_id)",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "organization_members_select_own",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "organization_members",
+      "using": "(user_id = auth.uid())",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "organization_members_update_admin_or_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "organization_members",
+      "using": "can_admin_organization(organization_id)",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "(can_admin_organization(organization_id) AND (EXISTS ( SELECT 1\n   FROM roles r\n  WHERE ((r.id = organization_members.role_id) AND (r.scope = 'ORGANIZATION'::text) AND (r.is_active = true)))))"
+    },
+    {
+      "name": "organizations_delete_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "organizations",
+      "using": "is_system_admin()",
+      "schema": "public",
+      "command": "DELETE",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "organizations_insert_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "organizations",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT",
+      "permissive": "PERMISSIVE",
+      "with_check": "is_system_admin()"
+    },
+    {
+      "name": "organizations_select_scoped_or_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "organizations",
+      "using": "can_read_organization(id)",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "organizations_update_admin_or_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "organizations",
+      "using": "can_admin_organization(id)",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_admin_organization(id)"
+    },
+    {
+      "name": "product_variants_delete_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "product_variants",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "DELETE",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "product_variants_insert_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "product_variants",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "product_variants_select_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "product_variants",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "product_variants_update_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "product_variants",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "products_delete_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "products",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "DELETE",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "products_insert_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "products",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "products_select_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "products",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "products_update_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "products",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "profiles_select_own",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "profiles",
+      "using": "(auth.uid() = id)",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "profiles_select_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "profiles",
+      "using": "is_system_admin()",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "profiles_update_own_safe",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "profiles",
+      "using": "(auth.uid() = id)",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "((auth.uid() = id) AND (is_active = ( SELECT current_profile.is_active\n   FROM profiles current_profile\n  WHERE (current_profile.id = auth.uid()))) AND (created_at = ( SELECT current_profile.created_at\n   FROM profiles current_profile\n  WHERE (current_profile.id = auth.uid()))) AND (is_system_admin = ( SELECT current_profile.is_system_admin\n   FROM profiles current_profile\n  WHERE (current_profile.id = auth.uid()))))"
+    },
+    {
+      "name": "profiles_update_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "profiles",
+      "using": "is_system_admin()",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "is_system_admin()"
+    },
+    {
+      "name": "roles_delete_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "roles",
+      "using": "is_system_admin()",
+      "schema": "public",
+      "command": "DELETE",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "roles_insert_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "roles",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT",
+      "permissive": "PERMISSIVE",
+      "with_check": "is_system_admin()"
+    },
+    {
+      "name": "roles_select_active_organization_roles",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "roles",
+      "using": "((scope = 'ORGANIZATION'::text) AND (is_active = true))",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "roles_select_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "roles",
+      "using": "is_system_admin()",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "roles_update_system_admin",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "roles",
+      "using": "is_system_admin()",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "is_system_admin()"
+    },
+    {
+      "name": "sales_facts_delete_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_facts",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "DELETE",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "sales_facts_insert_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_facts",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "sales_facts_select_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_facts",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "sales_facts_update_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_facts",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "sales_imports_insert_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_imports",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "sales_imports_select_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_imports",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "sales_imports_update_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_imports",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "sales_periods_delete_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_periods",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "DELETE",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "sales_periods_insert_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_periods",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "sales_periods_select_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_periods",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "sales_periods_update_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_periods",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "sales_scenarios_delete_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_scenarios",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "DELETE",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "sales_scenarios_insert_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_scenarios",
+      "using": null,
+      "schema": "public",
+      "command": "INSERT",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    },
+    {
+      "name": "sales_scenarios_select_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_scenarios",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "SELECT",
+      "permissive": "PERMISSIVE",
+      "with_check": null
+    },
+    {
+      "name": "sales_scenarios_update_sales_admin_or_system",
+      "roles": [
+        "authenticated"
+      ],
+      "table": "sales_scenarios",
+      "using": "can_manage_sales_organization(organization_id)",
+      "schema": "public",
+      "command": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "with_check": "can_manage_sales_organization(organization_id)"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "on_auth_user_created",
+      "table": "auth.users",
+      "enabled": "O",
+      "function": "handle_new_user()",
+      "definition": "CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION handle_new_user()"
+    },
+    {
+      "name": "set_customers_updated_at",
+      "table": "customers",
+      "enabled": "O",
+      "function": "set_updated_at()",
+      "definition": "CREATE TRIGGER set_customers_updated_at BEFORE UPDATE ON customers FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "name": "set_organization_members_updated_at",
+      "table": "organization_members",
+      "enabled": "O",
+      "function": "set_updated_at()",
+      "definition": "CREATE TRIGGER set_organization_members_updated_at BEFORE UPDATE ON organization_members FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "name": "on_organization_created_seed_sales_scenarios",
+      "table": "organizations",
+      "enabled": "O",
+      "function": "seed_sales_scenarios_for_organization()",
+      "definition": "CREATE TRIGGER on_organization_created_seed_sales_scenarios AFTER INSERT ON organizations FOR EACH ROW EXECUTE FUNCTION seed_sales_scenarios_for_organization()"
+    },
+    {
+      "name": "set_organizations_updated_at",
+      "table": "organizations",
+      "enabled": "O",
+      "function": "set_updated_at()",
+      "definition": "CREATE TRIGGER set_organizations_updated_at BEFORE UPDATE ON organizations FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "name": "set_product_variants_updated_at",
+      "table": "product_variants",
+      "enabled": "O",
+      "function": "set_updated_at()",
+      "definition": "CREATE TRIGGER set_product_variants_updated_at BEFORE UPDATE ON product_variants FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "name": "set_products_updated_at",
+      "table": "products",
+      "enabled": "O",
+      "function": "set_updated_at()",
+      "definition": "CREATE TRIGGER set_products_updated_at BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "name": "set_profiles_updated_at",
+      "table": "profiles",
+      "enabled": "O",
+      "function": "set_updated_at()",
+      "definition": "CREATE TRIGGER set_profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "name": "set_roles_updated_at",
+      "table": "roles",
+      "enabled": "O",
+      "function": "set_updated_at()",
+      "definition": "CREATE TRIGGER set_roles_updated_at BEFORE UPDATE ON roles FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "name": "enforce_sales_fact_variant_customer_consistency_tg",
+      "table": "sales_facts",
+      "enabled": "O",
+      "function": "enforce_sales_fact_variant_customer_consistency()",
+      "definition": "CREATE TRIGGER enforce_sales_fact_variant_customer_consistency_tg BEFORE INSERT OR UPDATE ON sales_facts FOR EACH ROW EXECUTE FUNCTION enforce_sales_fact_variant_customer_consistency()"
+    },
+    {
+      "name": "set_sales_facts_updated_at",
+      "table": "sales_facts",
+      "enabled": "O",
+      "function": "set_updated_at()",
+      "definition": "CREATE TRIGGER set_sales_facts_updated_at BEFORE UPDATE ON sales_facts FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "name": "set_sales_imports_updated_at",
+      "table": "sales_imports",
+      "enabled": "O",
+      "function": "set_updated_at()",
+      "definition": "CREATE TRIGGER set_sales_imports_updated_at BEFORE UPDATE ON sales_imports FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "name": "set_sales_periods_updated_at",
+      "table": "sales_periods",
+      "enabled": "O",
+      "function": "set_updated_at()",
+      "definition": "CREATE TRIGGER set_sales_periods_updated_at BEFORE UPDATE ON sales_periods FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "name": "set_sales_scenarios_updated_at",
+      "table": "sales_scenarios",
+      "enabled": "O",
+      "function": "set_updated_at()",
+      "definition": "CREATE TRIGGER set_sales_scenarios_updated_at BEFORE UPDATE ON sales_scenarios FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    }
+  ],
+  "functions": [
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "can_admin_organization(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.can_admin_organization(target_organization_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\n  select public.is_system_admin() or public.is_organization_admin(target_organization_id);\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "can_manage_sales_organization(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.can_manage_sales_organization(target_organization_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\n  select public.is_system_admin() or public.is_organization_admin(target_organization_id);\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "can_read_organization(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.can_read_organization(target_organization_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\n  select public.is_system_admin() or public.is_organization_member(target_organization_id);\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "enforce_sales_fact_variant_customer_consistency()",
+      "definition": "CREATE OR REPLACE FUNCTION public.enforce_sales_fact_variant_customer_consistency()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\ndeclare\r\n  variant_customer_id uuid;\r\nbegin\r\n  if new.product_variant_id is null then\r\n    return new;\r\n  end if;\r\n\r\n  select pv.customer_id\r\n    into variant_customer_id\r\n  from public.product_variants as pv\r\n  where pv.organization_id = new.organization_id\r\n    and pv.id = new.product_variant_id;\r\n\r\n  if not found then\r\n    raise exception using\r\n      errcode = '23503',\r\n      message = 'product_variant_id does not belong to organization_id';\r\n  end if;\r\n\r\n  if variant_customer_id is not null and variant_customer_id <> new.customer_id then\r\n    raise exception using\r\n      errcode = '23514',\r\n      message = 'customer_id must match product_variant.customer_id when variant is customer-specific';\r\n  end if;\r\n\r\n  return new;\r\nend;\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=public, auth, pg_temp"
+      ],
+      "signature": "handle_new_user()",
+      "definition": "CREATE OR REPLACE FUNCTION public.handle_new_user()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'auth', 'pg_temp'\nAS $function$\r\nbegin\r\n  insert into public.profiles (id, full_name, avatar_url)\r\n  values (\r\n    new.id,\r\n    nullif(trim(new.raw_user_meta_data ->> 'full_name'), ''),\r\n    nullif(trim(new.raw_user_meta_data ->> 'avatar_url'), '')\r\n  )\r\n  on conflict (id) do update\r\n  set\r\n    full_name = coalesce(excluded.full_name, public.profiles.full_name),\r\n    avatar_url = coalesce(excluded.avatar_url, public.profiles.avatar_url);\r\n\r\n  return new;\r\nend;\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "is_organization_admin(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.is_organization_admin(target_organization_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\n  select\r\n    public.is_system_admin()\r\n    or exists (\r\n      select 1\r\n      from public.organization_members as m\r\n      join public.profiles as p on p.id = m.user_id\r\n      join public.roles as r on r.id = m.role_id\r\n      where m.organization_id = target_organization_id\r\n        and m.user_id = auth.uid()\r\n        and m.is_active = true\r\n        and p.is_active = true\r\n        and r.scope = 'ORGANIZATION'\r\n        and r.code = 'ADMIN'\r\n        and r.is_active = true\r\n    );\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "is_organization_member(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.is_organization_member(target_organization_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\n  select exists (\r\n    select 1\r\n    from public.organization_members as m\r\n    join public.profiles as p on p.id = m.user_id\r\n    where m.organization_id = target_organization_id\r\n      and m.user_id = auth.uid()\r\n      and m.is_active = true\r\n      and p.is_active = true\r\n  );\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "is_system_admin()",
+      "definition": "CREATE OR REPLACE FUNCTION public.is_system_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\n  select exists (\r\n    select 1\r\n    from public.profiles as p\r\n    where p.id = auth.uid()\r\n      and p.is_active = true\r\n      and p.is_system_admin = true\r\n  );\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_catalog"
+      ],
+      "signature": "rls_auto_enable()",
+      "definition": "CREATE OR REPLACE FUNCTION public.rls_auto_enable()\n RETURNS event_trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog'\nAS $function$\nDECLARE\n  cmd record;\nBEGIN\n  FOR cmd IN\n    SELECT *\n    FROM pg_event_trigger_ddl_commands()\n    WHERE command_tag IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')\n      AND object_type IN ('table','partitioned table')\n  LOOP\n     IF cmd.schema_name IS NOT NULL AND cmd.schema_name IN ('public') AND cmd.schema_name NOT IN ('pg_catalog','information_schema') AND cmd.schema_name NOT LIKE 'pg_toast%' AND cmd.schema_name NOT LIKE 'pg_temp%' THEN\n      BEGIN\n        EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);\n        RAISE LOG 'rls_auto_enable: enabled RLS on %', cmd.object_identity;\n      EXCEPTION\n        WHEN OTHERS THEN\n          RAISE LOG 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;\n      END;\n     ELSE\n        RAISE LOG 'rls_auto_enable: skip % (either system schema or not in enforced list: %.)', cmd.object_identity, cmd.schema_name;\n     END IF;\n  END LOOP;\nEND;\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "=X/postgres",
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "seed_sales_scenarios_for_organization()",
+      "definition": "CREATE OR REPLACE FUNCTION public.seed_sales_scenarios_for_organization()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\nbegin\r\n  insert into public.sales_scenarios (organization_id, code, name_key, description_key, sort_order, is_active)\r\n  values\r\n    (new.id, 'BUDGET', 'sales.scenario.budget.name', 'sales.scenario.budget.description', 10, true),\r\n    (new.id, 'FORECAST', 'sales.scenario.forecast.name', 'sales.scenario.forecast.description', 20, true),\r\n    (new.id, 'ACTUAL', 'sales.scenario.actual.name', 'sales.scenario.actual.description', 30, true)\r\n  on conflict (organization_id, code) do nothing;\r\n\r\n  return new;\r\nend;\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "set_updated_at()",
+      "definition": "CREATE OR REPLACE FUNCTION public.set_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\nbegin\r\n  new.updated_at = now();\r\n  return new;\r\nend;\r\n$function$\n",
+      "security_definer": false,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "system_admin_create_organization(text,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.system_admin_create_organization(organization_name text, organization_slug text)\n RETURNS organizations\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\ndeclare\r\n  inserted_org public.organizations;\r\nbegin\r\n  if not public.is_system_admin() then\r\n    raise exception 'insufficient_privilege';\r\n  end if;\r\n\r\n  insert into public.organizations (name, slug)\r\n  values (organization_name, organization_slug)\r\n  returning * into inserted_org;\r\n\r\n  return inserted_org;\r\nend;\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "system_admin_create_role(text,text,text,text,integer,boolean)",
+      "definition": "CREATE OR REPLACE FUNCTION public.system_admin_create_role(role_code text, role_scope text, role_name_key text, role_description_key text, role_sort_order integer, role_is_active boolean)\n RETURNS roles\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\ndeclare\r\n  inserted_role public.roles;\r\nbegin\r\n  if not public.is_system_admin() then\r\n    raise exception 'insufficient_privilege';\r\n  end if;\r\n\r\n  insert into public.roles (code, scope, name_key, description_key, sort_order, is_active)\r\n  values (role_code, role_scope, role_name_key, role_description_key, role_sort_order, role_is_active)\r\n  returning * into inserted_role;\r\n\r\n  return inserted_role;\r\nend;\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "system_admin_delete_organization(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.system_admin_delete_organization(target_organization_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\nbegin\r\n  if not public.is_system_admin() then\r\n    raise exception 'insufficient_privilege';\r\n  end if;\r\n\r\n  delete from public.organizations as o\r\n  where o.id = target_organization_id;\r\n\r\n  if not found then\r\n    raise exception 'organization_not_found';\r\n  end if;\r\nend;\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "system_admin_delete_role(uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.system_admin_delete_role(target_role_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\nbegin\r\n  if not public.is_system_admin() then\r\n    raise exception 'insufficient_privilege';\r\n  end if;\r\n\r\n  delete from public.roles as r\r\n  where r.id = target_role_id;\r\n\r\n  if not found then\r\n    raise exception 'role_not_found';\r\n  end if;\r\nend;\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "system_admin_set_profile_privilege(uuid,boolean,boolean)",
+      "definition": "CREATE OR REPLACE FUNCTION public.system_admin_set_profile_privilege(target_profile_id uuid, target_is_active boolean, target_is_system_admin boolean)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\nbegin\r\n  if not public.is_system_admin() then\r\n    raise exception 'insufficient_privilege';\r\n  end if;\r\n\r\n  update public.profiles as p\r\n  set\r\n    is_active = target_is_active,\r\n    is_system_admin = target_is_system_admin\r\n  where p.id = target_profile_id;\r\n\r\n  if not found then\r\n    raise exception 'profile_not_found';\r\n  end if;\r\nend;\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "settings": [
+        "search_path=pg_temp"
+      ],
+      "signature": "system_admin_update_role(uuid,text,text,text,integer,boolean)",
+      "definition": "CREATE OR REPLACE FUNCTION public.system_admin_update_role(target_role_id uuid, role_scope text, role_name_key text, role_description_key text, role_sort_order integer, role_is_active boolean)\n RETURNS roles\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_temp'\nAS $function$\r\ndeclare\r\n  updated_role public.roles;\r\nbegin\r\n  if not public.is_system_admin() then\r\n    raise exception 'insufficient_privilege';\r\n  end if;\r\n\r\n  update public.roles as r\r\n  set\r\n    scope = role_scope,\r\n    name_key = role_name_key,\r\n    description_key = role_description_key,\r\n    sort_order = role_sort_order,\r\n    is_active = role_is_active\r\n  where r.id = target_role_id\r\n  returning * into updated_role;\r\n\r\n  if not found then\r\n    raise exception 'role_not_found';\r\n  end if;\r\n\r\n  return updated_role;\r\nend;\r\n$function$\n",
+      "security_definer": true,
+      "explicit_function_acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    }
+  ],
+  "constraints": [
+    {
+      "name": "customers_created_by_fkey",
+      "table": "customers",
+      "validated": true,
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "customers_organization_id_fkey",
+      "table": "customers",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "customers_pkey",
+      "table": "customers",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "customers_unique_org_code",
+      "table": "customers",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, customer_code)"
+    },
+    {
+      "name": "customers_unique_org_id",
+      "table": "customers",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, id)"
+    },
+    {
+      "name": "customers_unique_org_name",
+      "table": "customers",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, name)"
+    },
+    {
+      "name": "customers_updated_by_fkey",
+      "table": "customers",
+      "validated": true,
+      "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "organization_members_organization_id_fkey",
+      "table": "organization_members",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "organization_members_pkey",
+      "table": "organization_members",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "organization_members_role_id_fkey",
+      "table": "organization_members",
+      "validated": true,
+      "definition": "FOREIGN KEY (role_id) REFERENCES roles(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+    },
+    {
+      "name": "organization_members_unique_org_user",
+      "table": "organization_members",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, user_id)"
+    },
+    {
+      "name": "organization_members_user_id_fkey",
+      "table": "organization_members",
+      "validated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "organizations_pkey",
+      "table": "organizations",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "organizations_slug_key",
+      "table": "organizations",
+      "validated": true,
+      "definition": "UNIQUE (slug)"
+    },
+    {
+      "name": "product_variants_created_by_fkey",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "product_variants_customer_id_fkey",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "product_variants_organization_id_fkey",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "product_variants_pkey",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "product_variants_positive_dimensions_check",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "CHECK ((thickness_mm IS NULL OR thickness_mm > 0::numeric) AND (width_mm IS NULL OR width_mm > 0::numeric) AND (depth_mm IS NULL OR depth_mm > 0::numeric) AND (length_mm IS NULL OR length_mm > 0::numeric) AND (volume_per_unit_m3 IS NULL OR volume_per_unit_m3 > 0::numeric))"
+    },
+    {
+      "name": "product_variants_product_id_fkey",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "product_variants_same_org_customer_fk",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id, customer_id) REFERENCES customers(organization_id, id) ON DELETE SET NULL"
+    },
+    {
+      "name": "product_variants_same_org_product_fk",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id, product_id) REFERENCES products(organization_id, id) ON DELETE CASCADE"
+    },
+    {
+      "name": "product_variants_unique_org_code",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, variant_code)"
+    },
+    {
+      "name": "product_variants_unique_org_id",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, id)"
+    },
+    {
+      "name": "product_variants_unique_org_id_product_id",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, id, product_id)"
+    },
+    {
+      "name": "product_variants_updated_by_fkey",
+      "table": "product_variants",
+      "validated": true,
+      "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "products_created_by_fkey",
+      "table": "products",
+      "validated": true,
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "products_organization_id_fkey",
+      "table": "products",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "products_pkey",
+      "table": "products",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "products_unique_org_code",
+      "table": "products",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, product_code)"
+    },
+    {
+      "name": "products_unique_org_id",
+      "table": "products",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, id)"
+    },
+    {
+      "name": "products_unique_org_name",
+      "table": "products",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, name)"
+    },
+    {
+      "name": "products_updated_by_fkey",
+      "table": "products",
+      "validated": true,
+      "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "profiles_id_fkey",
+      "table": "profiles",
+      "validated": true,
+      "definition": "FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "profiles_pkey",
+      "table": "profiles",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "roles_code_key",
+      "table": "roles",
+      "validated": true,
+      "definition": "UNIQUE (code)"
+    },
+    {
+      "name": "roles_pkey",
+      "table": "roles",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "sales_facts_created_by_fkey",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "sales_facts_currency_code_check",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "CHECK (char_length(currency_code) = 3)"
+    },
+    {
+      "name": "sales_facts_customer_id_fkey",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_facts_organization_id_fkey",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "sales_facts_period_id_fkey",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (period_id) REFERENCES sales_periods(id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_facts_pkey",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "sales_facts_positive_values_check",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "CHECK ((quantity_value IS NULL OR quantity_value >= 0::numeric) AND (volume_m3 IS NULL OR volume_m3 >= 0::numeric) AND (unit_price_amount IS NULL OR unit_price_amount >= 0::numeric))"
+    },
+    {
+      "name": "sales_facts_pricing_basis_check",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "CHECK (pricing_basis_code IS NULL OR (pricing_basis_code = ANY (ARRAY['PER_PIECE'::text, 'PER_M3'::text])))"
+    },
+    {
+      "name": "sales_facts_product_id_fkey",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_facts_product_variant_id_fkey",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (product_variant_id) REFERENCES product_variants(id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_facts_same_org_customer_fk",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id, customer_id) REFERENCES customers(organization_id, id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_facts_same_org_import_fk",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id, import_id) REFERENCES sales_imports(organization_id, id) ON DELETE SET NULL (import_id)"
+    },
+    {
+      "name": "sales_facts_same_org_period_fk",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id, period_id) REFERENCES sales_periods(organization_id, id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_facts_same_org_product_fk",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id, product_id) REFERENCES products(organization_id, id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_facts_same_org_scenario_fk",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id, scenario_id) REFERENCES sales_scenarios(organization_id, id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_facts_same_org_variant_fk",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id, product_variant_id) REFERENCES product_variants(organization_id, id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_facts_scenario_id_fkey",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (scenario_id) REFERENCES sales_scenarios(id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_facts_updated_by_fkey",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "sales_facts_variant_matches_product_fk",
+      "table": "sales_facts",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id, product_variant_id, product_id) REFERENCES product_variants(organization_id, id, product_id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_imports_counts_non_negative_check",
+      "table": "sales_imports",
+      "validated": true,
+      "definition": "CHECK (row_count >= 0 AND fact_count >= 0 AND created_count >= 0 AND updated_count >= 0 AND warning_count >= 0 AND error_count >= 0)"
+    },
+    {
+      "name": "sales_imports_import_mode_check",
+      "table": "sales_imports",
+      "validated": true,
+      "definition": "CHECK (import_mode = ANY (ARRAY['CREATE_ONLY'::text, 'UPDATE_EXISTING'::text]))"
+    },
+    {
+      "name": "sales_imports_imported_by_fkey",
+      "table": "sales_imports",
+      "validated": true,
+      "definition": "FOREIGN KEY (imported_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "sales_imports_organization_id_fkey",
+      "table": "sales_imports",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "sales_imports_pkey",
+      "table": "sales_imports",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "sales_imports_same_org_scenario_fk",
+      "table": "sales_imports",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id, scenario_id) REFERENCES sales_scenarios(organization_id, id) ON DELETE RESTRICT"
+    },
+    {
+      "name": "sales_imports_status_check",
+      "table": "sales_imports",
+      "validated": true,
+      "definition": "CHECK (status = ANY (ARRAY['PENDING'::text, 'VALIDATED'::text, 'COMPLETED'::text, 'FAILED'::text, 'CANCELLED'::text]))"
+    },
+    {
+      "name": "sales_imports_unique_org_id",
+      "table": "sales_imports",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, id)"
+    },
+    {
+      "name": "sales_imports_year_number_check",
+      "table": "sales_imports",
+      "validated": true,
+      "definition": "CHECK (year_number >= 2000 AND year_number <= 2100)"
+    },
+    {
+      "name": "sales_periods_month_number_check",
+      "table": "sales_periods",
+      "validated": true,
+      "definition": "CHECK (month_number >= 1 AND month_number <= 12)"
+    },
+    {
+      "name": "sales_periods_organization_id_fkey",
+      "table": "sales_periods",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "sales_periods_period_start_month_check",
+      "table": "sales_periods",
+      "validated": true,
+      "definition": "CHECK (period_start = date_trunc('month'::text, period_start::timestamp with time zone)::date)"
+    },
+    {
+      "name": "sales_periods_pkey",
+      "table": "sales_periods",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "sales_periods_unique_org_id",
+      "table": "sales_periods",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, id)"
+    },
+    {
+      "name": "sales_periods_unique_org_period",
+      "table": "sales_periods",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, period_start)"
+    },
+    {
+      "name": "sales_periods_year_month_match_check",
+      "table": "sales_periods",
+      "validated": true,
+      "definition": "CHECK (year_number = EXTRACT(year FROM period_start)::integer AND month_number = EXTRACT(month FROM period_start)::integer)"
+    },
+    {
+      "name": "sales_scenarios_organization_id_fkey",
+      "table": "sales_scenarios",
+      "validated": true,
+      "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "sales_scenarios_pkey",
+      "table": "sales_scenarios",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "sales_scenarios_unique_org_code",
+      "table": "sales_scenarios",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, code)"
+    },
+    {
+      "name": "sales_scenarios_unique_org_id",
+      "table": "sales_scenarios",
+      "validated": true,
+      "definition": "UNIQUE (organization_id, id)"
+    }
+  ],
+  "environment": {
+    "user": "postgres",
+    "database": "postgres",
+    "migration_table": null,
+    "postgres_version": "17.6"
+  },
+  "schema_grants": [
+    {
+      "owner": "supabase_admin",
+      "schema": "auth",
+      "explicit_acl": [
+        "supabase_admin=UC/supabase_admin",
+        "anon=U/supabase_admin",
+        "authenticated=U/supabase_admin",
+        "service_role=U/supabase_admin",
+        "supabase_auth_admin=UC/supabase_admin",
+        "dashboard_user=UC/supabase_admin",
+        "postgres=U/supabase_admin"
+      ]
+    },
+    {
+      "owner": "pg_database_owner",
+      "schema": "public",
+      "explicit_acl": [
+        "pg_database_owner=UC/pg_database_owner",
+        "=U/pg_database_owner",
+        "postgres=U/pg_database_owner",
+        "anon=U/pg_database_owner",
+        "authenticated=U/pg_database_owner",
+        "service_role=U/pg_database_owner"
+      ]
+    }
+  ],
+  "default_grants": [
+    {
+      "acl": [
+        "postgres=rwU/supabase_admin",
+        "anon=rwU/supabase_admin",
+        "authenticated=rwU/supabase_admin",
+        "service_role=rwU/supabase_admin"
+      ],
+      "owner": "supabase_admin",
+      "schema": "public",
+      "object_type": "S"
+    },
+    {
+      "acl": [
+        "postgres=X/supabase_admin",
+        "anon=X/supabase_admin",
+        "authenticated=X/supabase_admin",
+        "service_role=X/supabase_admin"
+      ],
+      "owner": "supabase_admin",
+      "schema": "public",
+      "object_type": "f"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/supabase_admin",
+        "anon=arwdDxtm/supabase_admin",
+        "authenticated=arwdDxtm/supabase_admin",
+        "service_role=arwdDxtm/supabase_admin"
+      ],
+      "owner": "supabase_admin",
+      "schema": "public",
+      "object_type": "r"
+    },
+    {
+      "acl": [
+        "postgres=rwU/postgres",
+        "anon=rwU/postgres",
+        "authenticated=rwU/postgres",
+        "service_role=rwU/postgres"
+      ],
+      "owner": "postgres",
+      "schema": "public",
+      "object_type": "S"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "owner": "postgres",
+      "schema": "public",
+      "object_type": "f"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=arwdDxtm/postgres",
+        "authenticated=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "owner": "postgres",
+      "schema": "public",
+      "object_type": "r"
+    }
+  ],
+  "legacy_objects": [],
+  "migration_history": {
+    "rows": [],
+    "table_exists": false
+  },
+  "legacy_dependencies": [],
+  "tables_columns_rls_grants": [
+    {
+      "owner": "postgres",
+      "table": "customers",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "customer_code",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "default": "true",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        }
+      ],
+      "rls_forced": true,
+      "rls_enabled": true,
+      "explicit_table_acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres",
+        "authenticated=arwd/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "table": "organization_members",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "default": "true",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "role_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        }
+      ],
+      "rls_forced": true,
+      "rls_enabled": true,
+      "explicit_table_acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres",
+        "authenticated=arwd/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "table": "organizations",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        }
+      ],
+      "rls_forced": true,
+      "rls_enabled": true,
+      "explicit_table_acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres",
+        "authenticated=rw/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "table": "product_variants",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "product_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "customer_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "variant_code",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "variant_name",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "quality_code",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "quality_label_raw",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "thickness_mm",
+          "type": "numeric(10,3)",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "width_mm",
+          "type": "numeric(10,3)",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "depth_mm",
+          "type": "numeric(10,3)",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "length_mm",
+          "type": "numeric(10,3)",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "volume_per_unit_m3",
+          "type": "numeric(18,6)",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "default_quantity_unit_code",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "default": "true",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        }
+      ],
+      "rls_forced": true,
+      "rls_enabled": true,
+      "explicit_table_acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres",
+        "authenticated=arwd/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "table": "products",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "product_code",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "default": "true",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        }
+      ],
+      "rls_forced": true,
+      "rls_enabled": true,
+      "explicit_table_acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres",
+        "authenticated=arwd/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "table": "profiles",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "full_name",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": [
+            "authenticated=w/postgres"
+          ]
+        },
+        {
+          "name": "avatar_url",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": [
+            "authenticated=w/postgres"
+          ]
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "default": "true",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "is_system_admin",
+          "type": "boolean",
+          "default": "false",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        }
+      ],
+      "rls_forced": true,
+      "rls_enabled": true,
+      "explicit_table_acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres",
+        "authenticated=r/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "table": "roles",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "code",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "scope",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "name_key",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "description_key",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "default": "true",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "sort_order",
+          "type": "integer",
+          "default": "0",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        }
+      ],
+      "rls_forced": true,
+      "rls_enabled": true,
+      "explicit_table_acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres",
+        "authenticated=r/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "table": "sales_facts",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "scenario_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "period_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "customer_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "product_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "product_variant_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "quantity_value",
+          "type": "numeric(18,6)",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "quantity_unit_code",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "volume_m3",
+          "type": "numeric(18,6)",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "unit_price_amount",
+          "type": "numeric(18,6)",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "pricing_basis_code",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "revenue_amount",
+          "type": "numeric(18,2)",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "currency_code",
+          "type": "text",
+          "default": "'EUR'::text",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "source_label_raw",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "import_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        }
+      ],
+      "rls_forced": true,
+      "rls_enabled": true,
+      "explicit_table_acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres",
+        "authenticated=arwd/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "table": "sales_imports",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "scenario_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "year_number",
+          "type": "integer",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "source_filename",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "source_type",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "import_mode",
+          "type": "text",
+          "default": "'CREATE_ONLY'::text",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "default": "'PENDING'::text",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "row_count",
+          "type": "integer",
+          "default": "0",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "fact_count",
+          "type": "integer",
+          "default": "0",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_count",
+          "type": "integer",
+          "default": "0",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_count",
+          "type": "integer",
+          "default": "0",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "warning_count",
+          "type": "integer",
+          "default": "0",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "error_count",
+          "type": "integer",
+          "default": "0",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "imported_by",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "imported_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        }
+      ],
+      "rls_forced": true,
+      "rls_enabled": true,
+      "explicit_table_acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres",
+        "authenticated=arw/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "table": "sales_periods",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "period_start",
+          "type": "date",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "year_number",
+          "type": "integer",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "month_number",
+          "type": "integer",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        }
+      ],
+      "rls_forced": true,
+      "rls_enabled": true,
+      "explicit_table_acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres",
+        "authenticated=arwd/postgres"
+      ]
+    },
+    {
+      "owner": "postgres",
+      "table": "sales_scenarios",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "code",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "name_key",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "description_key",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "default": "true",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "sort_order",
+          "type": "integer",
+          "default": "0",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": "",
+          "explicit_column_acl": null
+        }
+      ],
+      "rls_forced": true,
+      "rls_enabled": true,
+      "explicit_table_acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=arwdDxtm/postgres",
+        "authenticated=arwd/postgres"
+      ]
+    }
+  ]
+}

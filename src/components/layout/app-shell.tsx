@@ -5,13 +5,16 @@ import { usePathname } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import type { AccessRole } from "@/lib/auth/types";
-import { getClientLocale } from "@/lib/i18n/client-locale";
+import type { AppLocale } from "@/lib/i18n/config";
+import { tApp } from "@/lib/i18n/app-ui";
+import { LanguageSelector } from "@/components/layout/language-selector";
 import { tSales } from "@/lib/i18n/sales-ui";
 import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
 import { navGroups } from "@/components/navigation/nav-config";
 import { Avatar, Button, Icon, SearchInput } from "@/components/ui";
 
 type AppShellProps = {
+  locale: AppLocale;
   children: ReactNode;
   role: AccessRole;
   userInitials: string;
@@ -23,10 +26,9 @@ type AppShellProps = {
   };
 };
 
-export function AppShell({ children, role, userInitials, organizationContext }: AppShellProps) {
+export function AppShell({ children, role, userInitials, organizationContext, locale }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const locale = getClientLocale();
   const resolvedOrganizationContext =
     organizationContext ?? {
       isSystemAdmin: false,
@@ -40,16 +42,16 @@ export function AppShell({ children, role, userInitials, organizationContext }: 
       navGroups
         .map((group) => ({
           ...group,
-          title: group.titleKey ? tSales(locale, group.titleKey as Parameters<typeof tSales>[1]) : group.title,
+          title: group.titleKey ? tApp(locale, group.titleKey) : group.title,
           items: group.items
             .filter((item) => (item.roles ? item.roles.includes(role) : true))
             .map((item) => ({
               ...item,
               label:
-                role === "employee" && item.employeeLabel
-                  ? item.employeeLabel
+                role === "employee" && item.employeeLabelKey
+                  ? tApp(locale, item.employeeLabelKey)
                   : item.labelKey
-                    ? tSales(locale, item.labelKey as Parameters<typeof tSales>[1])
+                    ? tApp(locale, item.labelKey)
                     : item.label,
             })),
         }))
@@ -61,7 +63,7 @@ export function AppShell({ children, role, userInitials, organizationContext }: 
     <div className="min-h-screen bg-app-background text-text-primary">
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-full w-64 border-r border-border bg-surface px-3 py-4 app-shell-shadow",
+          "fixed left-0 top-0 z-50 flex h-full w-64 flex-col border-r border-border bg-surface px-3 py-4 app-shell-shadow",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           "transition-transform",
         )}
@@ -69,7 +71,7 @@ export function AppShell({ children, role, userInitials, organizationContext }: 
         <div className="mb-6 flex items-center justify-between px-2">
           <div>
             <p className="text-label-small uppercase tracking-wider text-primary">Waldhaus</p>
-            <p className="text-component-heading">Manufacturing ERP</p>
+            <p className="text-component-heading">{tApp(locale, "shell.description")}</p>
             {resolvedOrganizationContext.isSystemAdmin ? (
               <p className="mt-1 text-body-small text-text-secondary">
                 {resolvedOrganizationContext.selectedOrganizationName ?? tSales(locale, "org.select")}
@@ -83,12 +85,13 @@ export function AppShell({ children, role, userInitials, organizationContext }: 
           <Button
             variant="icon"
             className="lg:hidden"
-            aria-label="Close navigation"
+            aria-label={tApp(locale, "shell.closeNavigation")}
             onClick={() => setMobileOpen(false)}
           >
             <Icon name="close" className="h-4 w-4" />
           </Button>
         </div>
+        <LanguageSelector locale={locale} />
         {resolvedOrganizationContext.isSystemAdmin ? (
           <OrganizationSwitcher
             locale={locale}
@@ -96,7 +99,7 @@ export function AppShell({ children, role, userInitials, organizationContext }: 
             selectedOrganizationId={resolvedOrganizationContext.selectedOrganizationId}
           />
         ) : null}
-        <nav className="app-scrollbar h-[calc(100%-88px)] overflow-y-auto">
+        <nav className="app-scrollbar min-h-0 flex-1 overflow-y-auto">
           {groups.map((group) => (
             <div key={group.title || "root"} className="mb-4">
               {group.title ? (
@@ -135,15 +138,15 @@ export function AppShell({ children, role, userInitials, organizationContext }: 
             <Button
               variant="icon"
               className="lg:hidden"
-              aria-label="Open navigation"
+              aria-label={tApp(locale, "shell.openNavigation")}
               onClick={() => setMobileOpen(true)}
             >
               <Icon name="menu" className="h-4 w-4" />
             </Button>
-            <SearchInput placeholder="Global search (orders, inventory, materials)" />
+            <SearchInput placeholder={tApp(locale, "shell.search")} />
           </div>
           <div className="ml-3 flex items-center gap-2">
-            <Button variant="icon" aria-label="Notifications">
+            <Button variant="icon" aria-label={tApp(locale, "shell.notifications")}>
               <Icon name="bell" className="h-4 w-4" />
             </Button>
             <Avatar initials={userInitials} />

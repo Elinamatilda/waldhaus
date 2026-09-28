@@ -1,9 +1,10 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireProfile } from "@/lib/auth/session";
 import { getOrganizationContext } from "@/lib/organization-context";
 import type { AccessRole } from "@/lib/auth/types";
+import { getRequestLocale } from "@/lib/i18n/locale";
 
 type AuthenticatedLayoutProps = {
   children: ReactNode;
@@ -12,9 +13,10 @@ type AuthenticatedLayoutProps = {
 export default async function AuthenticatedLayout({
   children,
 }: AuthenticatedLayoutProps) {
-  const [{ profile, user, membership }, organizationContext] = await Promise.all([
+  const [{ profile, user, membership }, organizationContext, locale] = await Promise.all([
     requireProfile(),
     getOrganizationContext(),
+    getRequestLocale(),
   ]);
 
   let role: AccessRole;
@@ -38,6 +40,7 @@ export default async function AuthenticatedLayout({
 
   return (
     <AppShell
+      locale={locale}
       role={role}
       userInitials={initials}
       organizationContext={{
@@ -47,7 +50,9 @@ export default async function AuthenticatedLayout({
         selectedOrganizationName: organizationContext.selectedOrganization?.name ?? null,
       }}
     >
-      {children}
+      <Fragment key={organizationContext.selectedOrganizationId ?? "no-organization"}>
+        {children}
+      </Fragment>
     </AppShell>
   );
 }

@@ -1,41 +1,35 @@
+import Link from 'next/link';
+import { requireRole } from '@/lib/auth/session';
+import { CustomerAnalysisFilterBar } from '@/components/sales/customer-analysis-filters';
+import { customerAnalysisFilters, scopedCustomerReport } from '@/lib/sales/customer-analysis';
+import { customerSalesLink } from '@/lib/sales/customer-share';
+import { tApp } from '@/lib/i18n/app-ui';
+import { SalesReportView } from "@/components/sales/report";
 import { notFound } from "next/navigation";
 import {
   Card,
   EmptyState,
-  MetricCard,
   PageHeader,
   SectionHeader,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
 } from "@/components/ui";
 import { getRequestLocale } from "@/lib/i18n/locale";
-import { salesMonthLabels, tSales } from "@/lib/i18n/sales-ui";
+import { tSales } from "@/lib/i18n/sales-ui";
 import { resolveSalesScope } from "@/lib/sales/scope";
 import { assertSalesSchemaReady, getCustomerById, getCustomerSalesAnalytics } from "@/lib/sales/service";
-
-function currency(amount: number) {
-  return new Intl.NumberFormat("en", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 export default async function CustomerDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ customerId: string }>;
-  searchParams?: Promise<{ org?: string; year?: string }>;
+  searchParams?: Promise<{ org?: string; year?: string | string[]; scenario?: string | string[] }>;
 }) {
+  await requireRole('admin');
   const locale = await getRequestLocale();
   const resolvedParams = await params;
   const resolvedSearch = (await searchParams) ?? {};
-  const year = Number(resolvedSearch.year ?? new Date().getFullYear());
-  const months = salesMonthLabels(locale);
+  let filters;
+  try { filters = customerAnalysisFilters(resolvedSearch, new Date().getUTCFullYear()); } catch { return <EmptyState title={tSales(locale, 'sales.noData')} description={tApp(locale, 'customerAnalysis.invalid')} />; }
   const scope = await resolveSalesScope();
   const schema = await assertSalesSchemaReady();
 
@@ -58,87 +52,29 @@ export default async function CustomerDetailPage({
     notFound();
   }
 
-  const analytics = await getCustomerSalesAnalytics(scope.organizationId, customer.id, year);
+  const analytics = await getCustomerSalesAnalytics(scope.organizationId, customer.id, filters.year);
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <PageHeader
         eyebrow={tSales(locale, "sales.customers")}
         title={customer.name}
         description={`${tSales(locale, "sales.code")}: ${customer.customer_code ?? "-"}`}
       />
 
-      <section className="grid gap-4 md:grid-cols-4">
-        <MetricCard label={tSales(locale, "sales.revenue")} value={currency(analytics.totalRevenue)} />
-        <MetricCard label={tSales(locale, "sales.volume")} value={analytics.totalVolume.toFixed(2)} hint="m3" />
-        <MetricCard
-          label={tSales(locale, "sales.avgPrice")}
-          value={analytics.avgUnitPrice == null ? "-" : currency(analytics.avgUnitPrice)}
-        />
-        <MetricCard
-          label={tSales(locale, "sales.status")}
-          value={customer.is_active ? tSales(locale, "sales.active") : tSales(locale, "sales.archived")}
-        />
-      </section>
-
-      <Card className="p-0 overflow-hidden">
-        <div className="p-4">
-          <SectionHeader title={tSales(locale, "sales.monthlyTrend")} />
-        </div>
-        <Table>
-          <TableHeader>
-            <tr>
-              <th className="px-4 py-3 text-left">{tSales(locale, "sales.month")}</th>
-              <th className="px-4 py-3 text-right">{tSales(locale, "sales.budget")}</th>
-              <th className="px-4 py-3 text-right">{tSales(locale, "sales.forecast")}</th>
-              <th className="px-4 py-3 text-right">{tSales(locale, "sales.actual")}</th>
-            </tr>
-          </TableHeader>
-          <TableBody>
-            {analytics.trend.map((row, index) => (
-              <TableRow key={row.month}>
-                <TableCell>{months[index] ?? String(row.month)}</TableCell>
-                <TableCell className="text-right">{currency(row.budget)}</TableCell>
-                <TableCell className="text-right">{currency(row.forecast)}</TableCell>
-                <TableCell className="text-right">{currency(row.actual)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <Link className="text-primary hover:underline focus-visible:outline-2 focus-visible:outline-focus-ring" href={customerSalesLink(filters.year, null, filters.scenario)}>{tApp(locale, 'customerAnalysis.back')}</Link>
+      <CustomerAnalysisFilterBar filters={filters} locale={locale} />
+      {analytics.totals.some(row => row.scenario === filters.scenario && row.currency_code !== 'EUR') ? <p className="text-body-small text-warning">{tApp(locale, 'customerAnalysis.excluded').replace('{currencies}', [...new Set(analytics.totals.filter(row => row.scenario === filters.scenario && row.currency_code !== 'EUR').map(row => row.currency_code))].join(', '))}</p> : null}
+      <div className="max-w-full overflow-x-auto"><SalesReportView report={scopedCustomerReport(analytics, filters)} locale={locale} /></div>
+      <Card>
+        <SectionHeader title={tSales(locale, "sales.status")} />
+        <p>{customer.is_active ? tSales(locale,"sales.active") : tSales(locale,"sales.archived")}</p>
       </Card>
-
       <Card>
         <SectionHeader title={tSales(locale, "sales.notes")} />
         <p className="text-body text-text-secondary">{customer.notes ?? "-"}</p>
       </Card>
 
-      <Card className="p-0 overflow-hidden">
-        <div className="p-4">
-          <SectionHeader title={tSales(locale, "sales.byProduct")} />
-        </div>
-        {analytics.products.length === 0 ? (
-          <div className="p-4">
-            <EmptyState title={tSales(locale, "sales.noData")} description={tSales(locale, "sales.empty")} />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <tr>
-                <th className="px-4 py-3 text-left">{tSales(locale, "sales.product")}</th>
-                <th className="px-4 py-3 text-right">{tSales(locale, "sales.revenue")}</th>
-              </tr>
-            </TableHeader>
-            <TableBody>
-              {analytics.products.map((product) => (
-                <TableRow key={product.name}>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell className="text-right">{currency(product.revenue)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </Card>
     </div>
   );
 }

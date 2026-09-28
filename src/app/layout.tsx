@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { getRequestLocale } from "@/lib/i18n/locale";
 import "./globals.css";
 
 const inter = Inter({
@@ -13,10 +14,11 @@ export const metadata: Metadata = {
   description: "Waldhaus manufacturing operations platform",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getRequestLocale();
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

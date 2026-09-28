@@ -1,73 +1,26 @@
-import { EmptyState, PageHeader } from "@/components/ui";
-import { CustomersManager } from "@/components/sales/customers-manager";
-import { getRequestLocale } from "@/lib/i18n/locale";
-import { tSales } from "@/lib/i18n/sales-ui";
-import { resolveSalesScope } from "@/lib/sales/scope";
-import { assertSalesSchemaReady, listCustomers } from "@/lib/sales/service";
-import { resolveSalesSearchParams } from "@/lib/sales/search-params";
+import { Card, EmptyState, PageHeader } from '@/components/ui';
+import { CustomersManager } from '@/components/sales/customers-manager';
+import { CustomerAnalysisView } from '@/components/sales/customer-analysis-view';
+import { CustomerAnalysisFilterBar } from '@/components/sales/customer-analysis-filters';
+import { getRequestLocale } from '@/lib/i18n/locale';
+import { tApp } from '@/lib/i18n/app-ui';
+import { loadCustomerAnalysis } from '@/lib/sales/customer-analysis-service';
 
-export default async function SalesCustomersPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ org?: string; q?: string }>;
-}) {
-  const params = await resolveSalesSearchParams(searchParams);
-  const locale = await getRequestLocale();
-  const scope = await resolveSalesScope();
-  const schema = await assertSalesSchemaReady();
-
-  if (!scope.organizationId) {
-    return (
-      <div className="space-y-6">
-        <PageHeader eyebrow={tSales(locale, "sales.group")} title={tSales(locale, "sales.customers")} />
-        <EmptyState title={tSales(locale, "org.select")} description={tSales(locale, "org.switch")} />
-      </div>
-    );
-  }
-
-  if (!schema.ready) {
-    return (
-      <EmptyState title={tSales(locale, "sales.schemaMissing")} description={schema.message} />
-    );
-  }
-
-  const rows = await listCustomers(scope.organizationId, params.q);
-
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        eyebrow={tSales(locale, "sales.group")}
-        title={tSales(locale, "sales.customers")}
-        description={tSales(locale, "sales.byCustomer")}
-      />
-
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <form action="" method="get" className="flex items-end gap-2">
-          {scope.isSystemAdmin ? <input type="hidden" name="org" value={scope.organizationId} /> : null}
-          <label className="text-label text-text-secondary">{tSales(locale, "sales.search")}</label>
-          <input
-            className="h-9 min-w-56 rounded-lg border border-border bg-surface-raised px-3 text-body"
-            type="text"
-            name="q"
-            defaultValue={params.q ?? ""}
-            placeholder={tSales(locale, "sales.customer")}
-          />
-          <button className="h-9 rounded-lg border border-border bg-surface-subtle px-3 text-label" type="submit">
-            {tSales(locale, "sales.search")}
-          </button>
-        </form>
-      </div>
-
-      {rows.length === 0 ? (
-        <EmptyState title={tSales(locale, "sales.noData")} description={tSales(locale, "sales.empty")} />
-      ) : (
-        <CustomersManager
-          locale={locale}
-          rows={rows}
-          organizationId={scope.organizationId}
-          isSystemAdmin={scope.isSystemAdmin}
-        />
-      )}
-    </div>
-  );
+export default async function SalesCustomersPage({ searchParams }: { searchParams?: Promise<{ year?: string | string[]; scenario?: string | string[]; q?: string; expand?: string }> }) {
+  const [locale, params] = await Promise.all([getRequestLocale(), searchParams]);
+  const currentYear = new Date().getUTCFullYear();
+  const result = await loadCustomerAnalysis(params ?? {}, currentYear);
+  const filters = result.kind === 'invalid' ? { year: currentYear, scenario: 'BUDGET' as const, currency: 'EUR' as const } : result.filters;
+  const organizationName = result.scope.organizations.find(row => row.id === result.scope.organizationId)?.name;
+  return <div className="min-w-0 space-y-6">
+    <PageHeader eyebrow={tApp(locale, 'sales.group')} title={tApp(locale, 'customerAnalysis.title')} description={organizationName} />
+    <CustomerAnalysisFilterBar filters={filters} locale={locale} />
+    {result.kind === 'invalid' ? <EmptyState title={tApp(locale, 'sales.noData')} description={tApp(locale, 'customerAnalysis.invalid')} /> : result.kind === 'no-organization' ? <EmptyState title={tApp(locale, 'org.select')} description={tApp(locale, 'org.switch')} /> : <>
+      {result.data ? <CustomerAnalysisView key={`${result.scope.organizationId}:${filters.year}:${filters.scenario}:${locale}`} data={result.data} locale={locale} expandedCustomerId={result.expandedCustomerId} productRows={result.productRows} initialSearch={typeof params?.q === 'string' ? params.q : ''} /> : <EmptyState title={tApp(locale, 'sales.noData')} description={tApp(locale, `customerAnalysis.${result.error}`)} />}
+      <Card className="min-w-0"><details>
+        <summary className="cursor-pointer rounded-sm text-component-heading text-primary hover:text-primary-hover focus-visible:outline-2 focus-visible:outline-focus-ring">{tApp(locale, 'customerAnalysis.master')}</summary>
+        <div className="mt-4 space-y-4">{result.customers ? <CustomersManager locale={locale} rows={result.customers} organizationId={result.scope.organizationId!} isSystemAdmin={result.scope.isSystemAdmin} year={filters.year} scenario={filters.scenario} /> : <p className="text-body-small text-text-secondary">{tApp(locale, 'customerAnalysis.masterUnavailable')}</p>}</div>
+      </details></Card>
+    </>}
+  </div>;
 }

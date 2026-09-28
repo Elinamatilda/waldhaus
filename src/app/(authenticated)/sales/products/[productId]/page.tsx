@@ -1,48 +1,44 @@
+import Link from "next/link";
+import { Suspense } from "react";
+import { ProductsManager } from "@/components/sales/products-manager";
+import { tProduct } from "@/lib/i18n/product-master-ui";
+import { requireRole } from '@/lib/auth/session';
+import { CustomerAnalysisFilterBar } from '@/components/sales/customer-analysis-filters';
+import { customerAnalysisFilters, scopedCustomerReport } from '@/lib/sales/customer-analysis';
+import { ProductMasterManager } from "@/components/sales/product-master-manager";
+import { getProductMasterDefinition, loadProductLookups, productMasterReady } from "@/lib/products/service";
+import { tApp } from "@/lib/i18n/app-ui";
+import { SalesReportView } from "@/components/sales/report";
 import { notFound } from "next/navigation";
 import {
   Card,
   EmptyState,
-  MetricCard,
   PageHeader,
-  SectionHeader,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
+  StatusBadge,
 } from "@/components/ui";
-import { createVariantAction } from "@/app/(authenticated)/sales/actions";
 import { getRequestLocale } from "@/lib/i18n/locale";
-import { salesMonthLabels, tSales } from "@/lib/i18n/sales-ui";
+import { tSales } from "@/lib/i18n/sales-ui";
 import { resolveSalesScope } from "@/lib/sales/scope";
 import {
   assertSalesSchemaReady,
   getProductById,
   getProductSalesAnalytics,
   listCustomers,
-  listVariants,
 } from "@/lib/sales/service";
-
-function currency(amount: number) {
-  return new Intl.NumberFormat("en", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 export default async function ProductDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ productId: string }>;
-  searchParams?: Promise<{ org?: string; year?: string }>;
+  searchParams?: Promise<{ org?: string; year?: string | string[]; scenario?: string | string[] }>;
 }) {
+  await requireRole('admin');
   const locale = await getRequestLocale();
   const resolvedParams = await params;
   const resolvedSearch = (await searchParams) ?? {};
-  const year = Number(resolvedSearch.year ?? new Date().getFullYear());
-  const months = salesMonthLabels(locale);
+  let filters;
+  try { filters = customerAnalysisFilters(resolvedSearch, new Date().getUTCFullYear()); } catch { return <EmptyState title={tSales(locale, 'sales.noData')} description={tApp(locale, 'customerAnalysis.invalid')} />; }
   const scope = await resolveSalesScope();
   const schema = await assertSalesSchemaReady();
 
@@ -65,9 +61,11 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  const variants = await listVariants(scope.organizationId, product.id);
-  const customers = await listCustomers(scope.organizationId);
-  const analytics = await getProductSalesAnalytics(scope.organizationId, product.id, year);
+  const ready = await productMasterReady(scope.organizationId);
+  const [definition, lookups, customers] = ready ? await Promise.all([
+    getProductMasterDefinition(scope.organizationId, product.id, locale),
+    loadProductLookups(scope.organizationId), listCustomers(scope.organizationId),
+  ]) : [null, null, []];
 
   return (
     <div className="space-y-6">
@@ -77,157 +75,40 @@ export default async function ProductDetailPage({
         description={`${tSales(locale, "sales.code")}: ${product.product_code ?? "-"}`}
       />
 
-      <section className="grid gap-4 md:grid-cols-4">
-        <MetricCard label={tSales(locale, "sales.revenue")} value={currency(analytics.totalRevenue)} />
-        <MetricCard label={tSales(locale, "sales.volume")} value={analytics.totalVolume.toFixed(2)} hint="m3" />
-        <MetricCard
-          label={tSales(locale, "sales.avgPrice")}
-          value={analytics.avgUnitPrice == null ? "-" : currency(analytics.avgUnitPrice)}
-        />
-        <MetricCard
-          label={tSales(locale, "sales.status")}
-          value={product.is_active ? tSales(locale, "sales.active") : tSales(locale, "sales.archived")}
-        />
-      </section>
-
-      <Card className="p-0 overflow-hidden">
-        <div className="p-4">
-          <SectionHeader title={tSales(locale, "sales.monthlyTrend")} />
+      <Link className="text-primary hover:underline" href="/sales/products">{tProduct(locale, 'backProducts')}</Link>
+      <Card className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <StatusBadge status={product.is_active ? 'success' : 'neutral'}>{tSales(locale, product.is_active ? 'sales.active' : 'sales.archived')}</StatusBadge>
+          <ProductsManager detailOnly locale={locale} rows={[product]} organizationId={scope.organizationId} isSystemAdmin={scope.isSystemAdmin} />
         </div>
-        <Table>
-          <TableHeader>
-            <tr>
-              <th className="px-4 py-3 text-left">{tSales(locale, "sales.month")}</th>
-              <th className="px-4 py-3 text-right">{tSales(locale, "sales.budget")}</th>
-              <th className="px-4 py-3 text-right">{tSales(locale, "sales.forecast")}</th>
-              <th className="px-4 py-3 text-right">{tSales(locale, "sales.actual")}</th>
-            </tr>
-          </TableHeader>
-          <TableBody>
-            {analytics.trend.map((row, index) => (
-              <TableRow key={row.month}>
-                <TableCell>{months[index] ?? String(row.month)}</TableCell>
-                <TableCell className="text-right">{currency(row.budget)}</TableCell>
-                <TableCell className="text-right">{currency(row.forecast)}</TableCell>
-                <TableCell className="text-right">{currency(row.actual)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <p className="text-body text-text-secondary">{product.description ?? '—'}</p>
       </Card>
-
-      <Card>
-        <SectionHeader title={tSales(locale, "sales.description")} />
-        <p className="text-body text-text-secondary">{product.description ?? "-"}</p>
-      </Card>
-
-      <Card className="p-0 overflow-hidden">
-        <div className="p-4">
-          <SectionHeader title={tSales(locale, "sales.byCustomer")} />
-        </div>
-        {analytics.customers.length === 0 ? (
-          <div className="p-4">
-            <EmptyState title={tSales(locale, "sales.noData")} description={tSales(locale, "sales.empty")} />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <tr>
-                <th className="px-4 py-3 text-left">{tSales(locale, "sales.customer")}</th>
-                <th className="px-4 py-3 text-right">{tSales(locale, "sales.revenue")}</th>
-              </tr>
-            </TableHeader>
-            <TableBody>
-              {analytics.customers.map((customer) => (
-                <TableRow key={customer.name}>
-                  <TableCell>{customer.name}</TableCell>
-                  <TableCell className="text-right">{currency(customer.revenue)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </Card>
-
-      <Card>
-        <SectionHeader title={tSales(locale, "sales.variant")} description={tSales(locale, "sales.variantOptional")} />
-        <form action={createVariantAction} className="grid gap-3 md:grid-cols-4">
-          <input type="hidden" name="organization_id" value={scope.organizationId} />
-          <input type="hidden" name="product_id" value={product.id} />
-          <input
-            name="variant_name"
-            required
-            className="h-9 rounded-lg border border-border bg-surface-raised px-3"
-            placeholder={tSales(locale, "sales.name")}
-          />
-          <input
-            name="variant_code"
-            className="h-9 rounded-lg border border-border bg-surface-raised px-3"
-            placeholder={tSales(locale, "sales.code")}
-          />
-          <select name="customer_id" className="h-9 rounded-lg border border-border bg-surface-raised px-3" defaultValue="">
-            <option value="">{tSales(locale, "sales.variantOptional")}</option>
-            {customers.map((customer) => (
-              <option key={customer.id} value={customer.id}>
-                {customer.name}
-              </option>
-            ))}
-          </select>
-          <input
-            name="quality_code"
-            className="h-9 rounded-lg border border-border bg-surface-raised px-3"
-            placeholder="Quality"
-          />
-          <input name="thickness_mm" className="h-9 rounded-lg border border-border bg-surface-raised px-3" placeholder="Thickness mm" />
-          <input name="width_mm" className="h-9 rounded-lg border border-border bg-surface-raised px-3" placeholder="Width mm" />
-          <input name="depth_mm" className="h-9 rounded-lg border border-border bg-surface-raised px-3" placeholder="Depth mm" />
-          <input name="length_mm" className="h-9 rounded-lg border border-border bg-surface-raised px-3" placeholder="Length mm" />
-          <input name="volume_per_unit_m3" className="h-9 rounded-lg border border-border bg-surface-raised px-3" placeholder="Volume / unit m3" />
-          <select name="default_quantity_unit_code" className="h-9 rounded-lg border border-border bg-surface-raised px-3" defaultValue="PIECE">
-            <option value="PIECE">PIECE</option>
-            <option value="LINEAR_METER">LINEAR_METER</option>
-          </select>
-          <button className="h-9 rounded-lg bg-primary px-3 text-label text-white" type="submit">
-            {tSales(locale, "sales.create")}
-          </button>
-        </form>
-      </Card>
-
-      <Card className="p-0 overflow-hidden">
-        <div className="p-4">
-          <SectionHeader title={tSales(locale, "sales.variant")} description="Existing variants" />
-        </div>
-        {variants.length === 0 ? (
-          <div className="p-4">
-            <EmptyState title={tSales(locale, "sales.noData")} description={tSales(locale, "sales.empty")} />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <tr>
-                <th className="px-4 py-3 text-left">{tSales(locale, "sales.name")}</th>
-                <th className="px-4 py-3 text-left">{tSales(locale, "sales.code")}</th>
-                <th className="px-4 py-3 text-left">Quality</th>
-                <th className="px-4 py-3 text-left">Dimensions</th>
-              </tr>
-            </TableHeader>
-            <TableBody>
-              {variants.map((variant) => (
-                <TableRow key={variant.id}>
-                  <TableCell>{variant.variant_name ?? "-"}</TableCell>
-                  <TableCell>{variant.variant_code ?? "-"}</TableCell>
-                  <TableCell>{variant.quality_code ?? variant.quality_label_raw ?? "-"}</TableCell>
-                  <TableCell>
-                    {[variant.thickness_mm, variant.width_mm, variant.depth_mm ?? variant.length_mm]
-                      .filter((value) => value != null)
-                      .join(" x ") || "-"}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </Card>
+      {definition && lookups ? <ProductMasterManager key={`${scope.organizationId}:${product.id}`} organizationId={scope.organizationId} locale={locale} definition={definition} lookups={lookups} customers={customers} /> : <EmptyState title={tApp(locale, 'productMaster.unavailable')} description={tProduct(locale, 'unavailable')} />}
+      <details>
+        <summary className="cursor-pointer text-section-title">{tProduct(locale, 'salesAnalysis')}</summary>
+        <Suspense fallback={<p>…</p>}>
+          <ProductSalesAnalysis organizationId={scope.organizationId} productId={product.id} filters={filters} locale={locale} />
+        </Suspense>
+      </details>
     </div>
   );
+}
+
+async function ProductSalesAnalysis({organizationId, productId, filters, locale}: {
+  organizationId: string; productId: string; filters: ReturnType<typeof customerAnalysisFilters>;
+  locale: Awaited<ReturnType<typeof getRequestLocale>>;
+}) {
+  let analytics;
+  try {
+    analytics = await getProductSalesAnalytics(organizationId, productId, filters.year);
+  } catch (error) {
+    if (error && typeof error === 'object' && 'digest' in error) throw error;
+    return <EmptyState title={tProduct(locale, 'salesAnalysis')} description={tProduct(locale, 'salesUnavailable')} />;
+  }
+  const excluded = [...new Set(analytics.totals.filter(row => row.scenario === filters.scenario && row.currency_code !== 'EUR').map(row => row.currency_code))];
+  return <div className="space-y-4 py-4">
+    <CustomerAnalysisFilterBar filters={filters} locale={locale} />
+    {excluded.length ? <p className="text-body-small text-warning">{tApp(locale, 'customerAnalysis.excluded').replace('{currencies}', excluded.join(', '))}</p> : null}
+    <div className="max-w-full overflow-x-auto"><SalesReportView report={scopedCustomerReport(analytics, filters)} locale={locale} /></div>
+  </div>;
 }

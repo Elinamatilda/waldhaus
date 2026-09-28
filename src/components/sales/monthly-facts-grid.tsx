@@ -1,11 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui";
+import type { MutationResult } from "@/lib/sales/validation";
+import { Button, Checkbox, Select } from "@/components/ui";
 import type { AppLocale } from "@/lib/i18n/locale";
 import { salesMonthLabels, tSales } from "@/lib/i18n/sales-ui";
 
 type GridRow = {
+  id: string;
+  version: string;
+  revenueMode: string;
   periodId: string;
   monthNumber: number;
   quantityValue: number | null;
@@ -29,7 +33,7 @@ export function MonthlyFactsGrid({
   rows,
 }: {
   locale: AppLocale;
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<MutationResult>;
   organizationId: string;
   year: number;
   scenarioId?: string;
@@ -38,6 +42,8 @@ export function MonthlyFactsGrid({
   variantId: string;
   rows: GridRow[];
 }) {
+  const [result, setResult] = useState<MutationResult | null>(null);
+  const [pending, setPending] = useState(false);
   const [dirty, setDirty] = useState(false);
   const months = salesMonthLabels(locale);
 
@@ -51,9 +57,17 @@ export function MonthlyFactsGrid({
 
   return (
     <form
-      action={async (formData) => {
-        await action(formData);
-        setDirty(false);
+      onSubmit={async (event) => {
+        event.preventDefault();
+        if (pending) return;
+        const formData = new FormData(event.currentTarget);
+        setPending(true);
+        try {
+          const response = await action(formData);
+          setResult(response);
+          if (response.ok) setDirty(false);
+        } catch { setResult({ok:false,code:"DATABASE_ERROR",message:"Save failed. Refresh to verify the current data before retrying."}); }
+        finally { setPending(false); }
       }}
       onChange={() => setDirty(true)}
       className="overflow-x-auto rounded-lg border border-border bg-surface-raised p-4"
@@ -65,10 +79,12 @@ export function MonthlyFactsGrid({
       <input type="hidden" name="product_variant_id" value={variantId} />
       <input type="hidden" name="year" value={String(year)} />
 
+      <fieldset disabled={pending}>
       <table className="min-w-[1200px] w-full border-collapse text-body">
         <thead>
           <tr>
             <th className="border-b border-border px-2 py-2 text-left">{tSales(locale, "sales.month")}</th>
+            <th>Delete</th><th>Revenue mode</th>
             <th className="border-b border-border px-2 py-2 text-right">{tSales(locale, "sales.quantity")}</th>
             <th className="border-b border-border px-2 py-2 text-left">Unit</th>
             <th className="border-b border-border px-2 py-2 text-right">{tSales(locale, "sales.volume")}</th>
@@ -84,7 +100,14 @@ export function MonthlyFactsGrid({
             const value = rowMap.get(monthNumber);
             return (
               <tr key={monthNumber}>
-                <td className="border-b border-border px-2 py-2">{months[index] ?? String(monthNumber)}</td>
+                <td className="border-b border-border px-2 py-2">{months[index] ?? String(monthNumber)}
+                  <input type="hidden" name={`id_${monthNumber}`} value={value?.id ?? ""} />
+                  <input type="hidden" name={`version_${monthNumber}`} value={value?.version ?? ""} />
+                </td>
+                <td><Checkbox name={`delete_${monthNumber}`} disabled={!value} aria-label={`Delete month ${monthNumber}`} /></td>
+                <td><Select name={`revenue_mode_${monthNumber}`} defaultValue={value?.revenueMode ?? "CALCULATED"}>
+                  <option value="CALCULATED">Calculated</option><option value="MANUAL">Manual / override</option>
+                </Select></td>
                 <td className="border-b border-border px-2 py-2">
                   <input
                     className="h-9 w-full rounded-lg border border-border bg-surface-raised px-3 text-right"
@@ -93,14 +116,14 @@ export function MonthlyFactsGrid({
                   />
                 </td>
                 <td className="border-b border-border px-2 py-2">
-                  <select
+                  <Select
                     className="h-9 w-full rounded-lg border border-border bg-surface-raised px-3"
                     name={`quantity_unit_${monthNumber}`}
                     defaultValue={value?.quantityUnitCode ?? "PIECE"}
                   >
                     <option value="PIECE">PIECE</option>
                     <option value="LINEAR_METER">LINEAR_METER</option>
-                  </select>
+                  </Select>
                 </td>
                 <td className="border-b border-border px-2 py-2">
                   <input
@@ -117,7 +140,7 @@ export function MonthlyFactsGrid({
                   />
                 </td>
                 <td className="border-b border-border px-2 py-2">
-                  <select
+                  <Select
                     className="h-9 w-full rounded-lg border border-border bg-surface-raised px-3"
                     name={`pricing_basis_${monthNumber}`}
                     defaultValue={value?.pricingBasisCode ?? ""}
@@ -125,7 +148,7 @@ export function MonthlyFactsGrid({
                     <option value=""></option>
                     <option value="PER_PIECE">PER_PIECE</option>
                     <option value="PER_M3">PER_M3</option>
-                  </select>
+                  </Select>
                 </td>
                 <td className="border-b border-border px-2 py-2">
                   <input
@@ -147,10 +170,13 @@ export function MonthlyFactsGrid({
         </tbody>
       </table>
 
+      <label><Checkbox name="confirm_delete" /> Confirm deletion of the selected months</label>
+      {result && !result.ok ? <p role="alert">{result.message}</p> : null}
       <div className="mt-4 flex items-center justify-between">
         <p className="text-body-small text-text-secondary">{dirty ? "Unsaved changes" : "All changes saved"}</p>
-        <Button type="submit">{tSales(locale, "sales.save")}</Button>
+        <Button type="submit" loading={pending}>{tSales(locale, "sales.save")}</Button>
       </div>
+      </fieldset>
     </form>
   );
 }

@@ -1,3 +1,5 @@
+import { listCustomerProductVariants } from "@/lib/products/service";
+import { validateYear } from "@/lib/sales/validation";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { upsertActualsGridAction } from "@/app/(authenticated)/sales/actions";
 import { MonthlyFactsGrid } from "@/components/sales/monthly-facts-grid";
@@ -9,7 +11,6 @@ import {
   getScenarioByCode,
   listCustomers,
   listProducts,
-  listVariants,
   loadPlanningGridRows,
 } from "@/lib/sales/service";
 import { resolveSalesSearchParams } from "@/lib/sales/search-params";
@@ -43,19 +44,26 @@ export default async function SalesActualsPage({
     return <EmptyState title={tSales(locale, "sales.schemaMissing")} description={schema.message} />;
   }
 
-  const year = Number(params.year ?? new Date().getFullYear());
+  const year = validateYear(Number(params.year ?? new Date().getFullYear()));
   const actualScenario = await getScenarioByCode(scope.organizationId, "ACTUAL");
   if (!actualScenario) {
     return <EmptyState title={tSales(locale, "sales.noData")} description="ACTUAL scenario is missing." />;
   }
 
-  const customers = (await listCustomers(scope.organizationId)).filter((customer) => customer.is_active);
-  const products = (await listProducts(scope.organizationId)).filter((product) => product.is_active);
+  const [customerRows, productRows] = await Promise.all([listCustomers(scope.organizationId), listProducts(scope.organizationId)]);
+  const customers = customerRows.filter(customer => customer.is_active);
+  const products = productRows.filter(product => product.is_active);
 
   const customerId = params.customer ?? customers[0]?.id ?? "";
   const productId = params.product ?? products[0]?.id ?? "";
-  const variants = productId ? await listVariants(scope.organizationId, productId) : [];
+  const variants = productId && customerId ? await listCustomerProductVariants(scope.organizationId, productId, customerId) : [];
   const variantId = params.variant ?? "";
+  if ((customerId && !customers.some(row => row.id === customerId)) ||
+      (productId && !products.some(row => row.id === productId)) ||
+      (variantId && !variants.some(row => row.id === variantId))) {
+    return <EmptyState title={tSales(locale,"sales.noData")} description={tSales(locale,"sales.empty")} />;
+  }
+
 
   if (!customerId || !productId) {
     return (
@@ -148,7 +156,7 @@ export default async function SalesActualsPage({
           <option value="">-</option>
           {variants.map((variant) => (
             <option key={variant.id} value={variant.id}>
-              {variant.variant_name ?? variant.variant_code ?? variant.id}
+              {String(variant.variant_name ?? variant.variant_code ?? variant.id)}
             </option>
           ))}
         </select>
@@ -159,6 +167,7 @@ export default async function SalesActualsPage({
       </form>
 
       <MonthlyFactsGrid
+        key={[scope.organizationId, year, customerId, productId, variantId, ...rows.map(row => row.edit_version)].join(":")}
         locale={locale}
         action={upsertActualsGridAction}
         organizationId={scope.organizationId}
@@ -167,6 +176,9 @@ export default async function SalesActualsPage({
         productId={productId}
         variantId={variantId}
         rows={rows.map((row) => ({
+          id: row.id,
+          version: row.edit_version,
+          revenueMode: row.revenue_mode,
           periodId: row.period_id,
           monthNumber: row.sales_periods?.month_number ?? 0,
           quantityValue: row.quantity_value,

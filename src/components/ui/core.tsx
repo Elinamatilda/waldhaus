@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type HTMLAttributes, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type HTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { Icon } from "./icon";
 
@@ -245,16 +245,21 @@ export function Dialog({
   children: ReactNode;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog || !open) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialog.showModal();
+    return () => { dialog.close(); previousFocus?.focus(); };
+  }, [open]);
   if (!open) {
     return null;
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={onClose}>
+    <dialog ref={dialogRef} aria-label={title} className="m-auto max-h-full w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-surface-raised p-0 text-text-primary backdrop:bg-black/30" onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
       <section
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
         className="w-full max-w-lg rounded-lg border border-border bg-surface-raised p-5"
         onClick={(event) => event.stopPropagation()}
       >
@@ -262,7 +267,7 @@ export function Dialog({
         {description ? <p className="mt-1 text-body text-text-secondary">{description}</p> : null}
         <div className="mt-4">{children}</div>
       </section>
-    </div>
+    </dialog>
   );
 }
 
@@ -448,7 +453,7 @@ export function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowEle
   return <tr {...props} className={cn("hover:bg-surface/80", className)} />;
 }
 
-export function TableCell({ className, ...props }: HTMLAttributes<HTMLTableCellElement>) {
+export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return <td {...props} className={cn("px-4 py-3 align-middle", className)} />;
 }
 

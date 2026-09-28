@@ -126,3 +126,19 @@ select {
 .raised-shadow-hover:hover {
   box-shadow: var(--shadow-md);
 }
+
+/* Shared chart semantics; inherit the established Waldhaus palette. */
+:root {
+  --chart-sales: var(--primary);
+  --chart-costs: var(--operational);
+  --chart-profit: var(--success);
+  --chart-cash: var(--primary);
+  --chart-target: var(--warning);
+  --chart-risk: var(--destructive);
+  --chart-customer-1: var(--primary);
+  --chart-customer-2: var(--operational);
+  --chart-customer-3: var(--success);
+  --chart-customer-4: var(--warning);
+  --chart-customer-5: var(--text-muted);
+  --chart-customer-6: var(--border-strong);
+}

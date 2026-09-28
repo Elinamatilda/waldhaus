@@ -3,14 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { ensurePeriods, getScenarioByCode, parseNumeric } from "@/lib/sales/service";
+import { getScenarioByCode } from "@/lib/sales/service";
+
+import { getOrganizationContext } from "@/lib/organization-context";
+import { parseAnnualForm, uuid, SalesValidationError, type MutationResult } from "@/lib/sales/validation";
 
 async function resolveWritableOrganization(formData: FormData) {
   const context = await requireRole("admin");
   const fromForm = String(formData.get("organization_id") ?? "").trim();
 
   if (context.profile.is_system_admin) {
-    if (!fromForm) {
+    if (!fromForm || fromForm !== (await getOrganizationContext()).selectedOrganizationId) {
       throw new Error("Organization is required for system admin operations.");
     }
 
@@ -32,48 +35,14 @@ async function resolveWritableOrganization(formData: FormData) {
   };
 }
 
-function validCurrencyCode(code: string) {
-  return /^[A-Z]{3}$/.test(code);
-}
-
-function validPricingBasis(code: string | null) {
-  return code == null || code === "PER_PIECE" || code === "PER_M3";
-}
-
-function resolveRevenue(args: {
-  revenueValue: number | null;
-  quantityValue: number | null;
-  volumeValue: number | null;
-  unitPriceValue: number | null;
-  pricingBasisCode: string | null;
-}) {
-  if (args.revenueValue != null) {
-    return args.revenueValue;
-  }
-
-  if (args.unitPriceValue == null || !args.pricingBasisCode) {
-    return null;
-  }
-
-  if (args.pricingBasisCode === "PER_PIECE" && args.quantityValue != null) {
-    return Number((args.quantityValue * args.unitPriceValue).toFixed(2));
-  }
-
-  if (args.pricingBasisCode === "PER_M3" && args.volumeValue != null) {
-    return Number((args.volumeValue * args.unitPriceValue).toFixed(2));
-  }
-
-  return null;
-}
-
-export async function createCustomerAction(formData: FormData) {
+async function createCustomer(formData: FormData) {
   const { organizationId, userId } = await resolveWritableOrganization(formData);
   const name = String(formData.get("name") ?? "").trim();
   const customerCodeRaw = String(formData.get("customer_code") ?? "").trim();
   const notesRaw = String(formData.get("notes") ?? "").trim();
 
   if (!name) {
-    throw new Error("Customer name is required.");
+    throw new SalesValidationError("Customer name is required.");
   }
 
   const supabase = await createClient();
@@ -87,14 +56,15 @@ export async function createCustomerAction(formData: FormData) {
   });
 
   if (error) {
-    throw new Error(error.message);
+    console.error("[sales][master-data]", error);
+    throw Object.assign(new Error("Sales change failed."), { databaseCode: error.code });
   }
 
   revalidatePath("/sales/customers");
   revalidatePath("/sales");
 }
 
-export async function updateCustomerAction(formData: FormData) {
+async function updateCustomer(formData: FormData) {
   const { organizationId, userId } = await resolveWritableOrganization(formData);
   const customerId = String(formData.get("customer_id") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
@@ -103,7 +73,7 @@ export async function updateCustomerAction(formData: FormData) {
   const isActive = String(formData.get("is_active") ?? "true").trim() !== "false";
 
   if (!customerId || !name) {
-    throw new Error("Customer id and name are required.");
+    throw new SalesValidationError("Customer id and name are required.");
   }
 
   const supabase = await createClient();
@@ -118,10 +88,11 @@ export async function updateCustomerAction(formData: FormData) {
       updated_by: userId,
     })
     .eq("id", customerId)
-    .eq("organization_id", organizationId);
+    .eq("organization_id", organizationId).select("id").single();
 
   if (error) {
-    throw new Error(error.message);
+    console.error("[sales][master-data]", error);
+    throw Object.assign(new Error("Sales change failed."), { databaseCode: error.code });
   }
 
   revalidatePath("/sales/customers");
@@ -129,13 +100,13 @@ export async function updateCustomerAction(formData: FormData) {
   revalidatePath("/sales");
 }
 
-export async function toggleCustomerActiveAction(formData: FormData) {
+async function toggleCustomerActive(formData: FormData) {
   const { organizationId, userId } = await resolveWritableOrganization(formData);
   const customerId = String(formData.get("customer_id") ?? "").trim();
   const nextState = String(formData.get("next_state") ?? "").trim() === "active";
 
   if (!customerId) {
-    return;
+    throw new SalesValidationError("Record identifier is required.");
   }
 
   const supabase = await createClient();
@@ -147,10 +118,11 @@ export async function toggleCustomerActiveAction(formData: FormData) {
       updated_by: userId,
     })
     .eq("id", customerId)
-    .eq("organization_id", organizationId);
+    .eq("organization_id", organizationId).select("id").single();
 
   if (error) {
-    throw new Error(error.message);
+    console.error("[sales][master-data]", error);
+    throw Object.assign(new Error("Sales change failed."), { databaseCode: error.code });
   }
 
   revalidatePath("/sales/customers");
@@ -158,35 +130,37 @@ export async function toggleCustomerActiveAction(formData: FormData) {
   revalidatePath("/sales");
 }
 
-export async function createProductAction(formData: FormData) {
+async function createProduct(formData: FormData) {
   const { organizationId, userId } = await resolveWritableOrganization(formData);
   const name = String(formData.get("name") ?? "").trim();
   const productCodeRaw = String(formData.get("product_code") ?? "").trim();
   const descriptionRaw = String(formData.get("description") ?? "").trim();
 
   if (!name) {
-    throw new Error("Product name is required.");
+    throw new SalesValidationError("Product name is required.");
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("products").insert({
+  const { data, error } = await supabase.from("products").insert({
     organization_id: organizationId,
     name,
     product_code: productCodeRaw || null,
     description: descriptionRaw || null,
     created_by: userId,
     updated_by: userId,
-  });
+  }).select('id').single();
 
   if (error) {
-    throw new Error(error.message);
+    console.error("[sales][master-data]", error);
+    throw Object.assign(new Error("Sales change failed."), { databaseCode: error.code });
   }
 
   revalidatePath("/sales/products");
   revalidatePath("/sales");
+  return {id:data!.id as string};
 }
 
-export async function updateProductAction(formData: FormData) {
+async function updateProduct(formData: FormData) {
   const { organizationId, userId } = await resolveWritableOrganization(formData);
   const productId = String(formData.get("product_id") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
@@ -195,7 +169,7 @@ export async function updateProductAction(formData: FormData) {
   const isActive = String(formData.get("is_active") ?? "true").trim() !== "false";
 
   if (!productId || !name) {
-    throw new Error("Product id and name are required.");
+    throw new SalesValidationError("Product id and name are required.");
   }
 
   const supabase = await createClient();
@@ -210,10 +184,11 @@ export async function updateProductAction(formData: FormData) {
       updated_by: userId,
     })
     .eq("id", productId)
-    .eq("organization_id", organizationId);
+    .eq("organization_id", organizationId).select("id").single();
 
   if (error) {
-    throw new Error(error.message);
+    console.error("[sales][master-data]", error);
+    throw Object.assign(new Error("Sales change failed."), { databaseCode: error.code });
   }
 
   revalidatePath("/sales/products");
@@ -221,13 +196,13 @@ export async function updateProductAction(formData: FormData) {
   revalidatePath("/sales");
 }
 
-export async function toggleProductActiveAction(formData: FormData) {
+async function toggleProductActive(formData: FormData) {
   const { organizationId, userId } = await resolveWritableOrganization(formData);
   const productId = String(formData.get("product_id") ?? "").trim();
   const nextState = String(formData.get("next_state") ?? "").trim() === "active";
 
   if (!productId) {
-    return;
+    throw new SalesValidationError("Record identifier is required.");
   }
 
   const supabase = await createClient();
@@ -239,10 +214,11 @@ export async function toggleProductActiveAction(formData: FormData) {
       updated_by: userId,
     })
     .eq("id", productId)
-    .eq("organization_id", organizationId);
+    .eq("organization_id", organizationId).select("id").single();
 
   if (error) {
-    throw new Error(error.message);
+    console.error("[sales][master-data]", error);
+    throw Object.assign(new Error("Sales change failed."), { databaseCode: error.code });
   }
 
   revalidatePath("/sales/products");
@@ -250,253 +226,71 @@ export async function toggleProductActiveAction(formData: FormData) {
   revalidatePath("/sales");
 }
 
-export async function createVariantAction(formData: FormData) {
-  const { organizationId, userId } = await resolveWritableOrganization(formData);
-  const productId = String(formData.get("product_id") ?? "").trim();
-  const variantName = String(formData.get("variant_name") ?? "").trim();
-
-  if (!productId) {
-    throw new Error("Product is required.");
+async function createVariant(formData: FormData) {
+  const { organizationId } = await resolveWritableOrganization(formData);
+  const { createProductVariant } = await import('@/lib/products/service');
+  if (formData.get('customer_id') || formData.get('volume_per_unit_m3') || formData.get('depth_mm')) {
+    throw new SalesValidationError('Use independent physical specification and customer commercial terms.');
   }
-
-  if (!variantName) {
-    throw new Error("Variant name is required.");
-  }
-
-  const customerIdRaw = String(formData.get("customer_id") ?? "").trim();
-  const variantCodeRaw = String(formData.get("variant_code") ?? "").trim();
-  const qualityCodeRaw = String(formData.get("quality_code") ?? "").trim();
-  const defaultUnitRaw = String(formData.get("default_quantity_unit_code") ?? "PIECE").trim();
-
-  const thicknessMm = parseNumeric(formData.get("thickness_mm"));
-  const widthMm = parseNumeric(formData.get("width_mm"));
-  const depthMm = parseNumeric(formData.get("depth_mm"));
-  const lengthMm = parseNumeric(formData.get("length_mm"));
-  const volumePerUnit = parseNumeric(formData.get("volume_per_unit_m3"));
-
-  if (defaultUnitRaw !== "PIECE" && defaultUnitRaw !== "LINEAR_METER") {
-    throw new Error("Invalid default quantity unit.");
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.from("product_variants").insert({
-    organization_id: organizationId,
-    product_id: productId,
-    customer_id: customerIdRaw || null,
-    variant_code: variantCodeRaw || null,
-    variant_name: variantName,
-    quality_code: qualityCodeRaw || null,
-    quality_label_raw: qualityCodeRaw || null,
-    thickness_mm: thicknessMm,
-    width_mm: widthMm,
-    depth_mm: depthMm,
-    length_mm: lengthMm,
-    volume_per_unit_m3: volumePerUnit,
-    default_quantity_unit_code: defaultUnitRaw,
-    created_by: userId,
-    updated_by: userId,
-  });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  revalidatePath("/sales/products");
-  revalidatePath(`/sales/products/${productId}`);
-  revalidatePath("/sales/planning");
+  const fields=['product_id','variant_code','variant_name','wood_species_id','construction_type_id','quality_code','thickness_mm','width_mm','length_mm','default_quantity_unit_code'];
+  const payload=Object.fromEntries(fields.map(field=>[field,String(formData.get(field)??'').trim()||null]));
+  await createProductVariant(organizationId,{...payload,is_active:true});
+  revalidatePath('/sales/products','layout');revalidatePath('/budget/sales');
 }
 
-async function upsertMonthlyFacts(args: {
-  formData: FormData;
-  scenarioId: string;
-  organizationId: string;
-  userId: string;
-  year: number;
-  customerId: string;
-  productId: string;
-  variantId: string | null;
-}) {
-  const periods = await ensurePeriods(args.organizationId, args.year);
-  const supabase = await createClient();
-
-  for (const period of periods) {
-    const month = period.month_number;
-    const quantityValue = parseNumeric(args.formData.get(`quantity_${month}`));
-    const volumeValue = parseNumeric(args.formData.get(`volume_${month}`));
-    const unitPriceValue = parseNumeric(args.formData.get(`unit_price_${month}`));
-    const revenueValue = parseNumeric(args.formData.get(`revenue_${month}`));
-    const quantityUnit = String(args.formData.get(`quantity_unit_${month}`) ?? "").trim();
-    const pricingBasis = String(args.formData.get(`pricing_basis_${month}`) ?? "").trim() || null;
-    const currencyCode =
-      String(args.formData.get(`currency_${month}`) ?? "EUR").trim().toUpperCase() || "EUR";
-
-    if (!validCurrencyCode(currencyCode)) {
-      throw new Error(`Invalid currency code for month ${month}. Use ISO-4217 code.`);
-    }
-
-    if (!validPricingBasis(pricingBasis)) {
-      throw new Error(`Invalid pricing basis for month ${month}.`);
-    }
-
-    if (quantityUnit && quantityUnit !== "PIECE" && quantityUnit !== "LINEAR_METER") {
-      throw new Error(`Invalid quantity unit for month ${month}.`);
-    }
-
-    const resolvedRevenue = resolveRevenue({
-      revenueValue,
-      quantityValue,
-      volumeValue,
-      unitPriceValue,
-      pricingBasisCode: pricingBasis,
+async function saveAnnual(formData: FormData, mode: "planning" | "actual"): Promise<MutationResult> {
+  // Resolve verified authorization before accessing any writable data.
+  try {
+    const { organizationId } = await resolveWritableOrganization(formData);
+    const input = parseAnnualForm(formData);
+    const scenarioId = mode === "actual"
+      ? (await getScenarioByCode(organizationId, "ACTUAL"))?.id
+      : uuid(String(formData.get("scenario_id") ?? ""));
+    if (!scenarioId) return {ok:false,code:"NOT_FOUND",message:"Sales scenario is unavailable."};
+    const supabase = await createClient();
+    const {error} = await supabase.rpc("save_sales_year", {
+      p_organization: organizationId, p_scenario: scenarioId, p_year:input.year,
+      p_customer:input.customer, p_product:input.product, p_variant:input.variant,
+      p_mode:mode, p_months:input.months,
     });
-
-    const hasAnyInput =
-      quantityValue != null ||
-      volumeValue != null ||
-      unitPriceValue != null ||
-      revenueValue != null ||
-      Boolean(pricingBasis);
-
-    let existingQuery = supabase
-      .from("sales_facts")
-      .select("id")
-      .eq("organization_id", args.organizationId)
-      .eq("scenario_id", args.scenarioId)
-      .eq("period_id", period.id)
-      .eq("customer_id", args.customerId)
-      .eq("product_id", args.productId)
-      .limit(1);
-
-    existingQuery = args.variantId
-      ? existingQuery.eq("product_variant_id", args.variantId)
-      : existingQuery.is("product_variant_id", null);
-
-    const { data: existingRows, error: existingError } = await existingQuery;
-
-    if (existingError) {
-      throw new Error(existingError.message);
+    if (error) {
+      console.error("[sales][save_sales_year]", error);
+      const code = error.code === "40001" || error.code === "40P01" || error.code === "23505" ? "CONFLICT"
+        : error.code === "42501" ? "FORBIDDEN" : error.code === "P0002" ? "NOT_FOUND"
+        : error.code === "22023" || error.code.startsWith("23") ? "VALIDATION_ERROR" : "DATABASE_ERROR";
+      const messages = {CONFLICT:"The data has changed since you opened it. Refresh before saving.",FORBIDDEN:"You cannot change these sales records.",NOT_FOUND:"A selected sales record no longer exists.",VALIDATION_ERROR:"Check the monthly values and selected customer, product and variant.",DATABASE_ERROR:"Sales save failed. No months were saved."};
+      return {ok:false,code,message:messages[code]};
     }
-
-    const existing = existingRows?.[0] as { id: string } | undefined;
-
-    if (!hasAnyInput || resolvedRevenue == null) {
-      if (existing) {
-        const { error: deleteError } = await supabase
-          .from("sales_facts")
-          .delete()
-          .eq("id", existing.id)
-          .eq("organization_id", args.organizationId);
-
-        if (deleteError) {
-          throw new Error(deleteError.message);
-        }
-      }
-
-      continue;
-    }
-
-    const payload = {
-      organization_id: args.organizationId,
-      scenario_id: args.scenarioId,
-      period_id: period.id,
-      customer_id: args.customerId,
-      product_id: args.productId,
-      product_variant_id: args.variantId,
-      quantity_value: quantityValue,
-      quantity_unit_code: quantityUnit || null,
-      volume_m3: volumeValue,
-      unit_price_amount: unitPriceValue,
-      pricing_basis_code: pricingBasis,
-      revenue_amount: resolvedRevenue,
-      currency_code: currencyCode,
-      updated_by: args.userId,
-    };
-
-    if (existing) {
-      const { error: updateError } = await supabase
-        .from("sales_facts")
-        .update(payload)
-        .eq("id", existing.id)
-        .eq("organization_id", args.organizationId);
-
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
-    } else {
-      const { error: insertError } = await supabase
-        .from("sales_facts")
-        .insert({
-          ...payload,
-          created_by: args.userId,
-        });
-
-      if (insertError) {
-        throw new Error(insertError.message);
-      }
-    }
+    revalidatePath("/sales", "layout");
+    revalidatePath("/budget/sales");
+    return {ok:true};
+  } catch (error) {
+    if (error && typeof error === "object" && "digest" in error) return {ok:false,code:"FORBIDDEN",message:"You cannot change these sales records."};
+    if (error instanceof SalesValidationError) return {ok:false,code:"VALIDATION_ERROR",message:error.message};
+    console.error("[sales][annual-save]", error);
+    return {ok:false,code:"DATABASE_ERROR",message:"Sales save failed. No months were saved."};
   }
 }
+export async function upsertPlanningGridAction(formData: FormData) { return saveAnnual(formData,"planning"); }
+export async function upsertActualsGridAction(formData: FormData) { return saveAnnual(formData,"actual"); }
 
-export async function upsertPlanningGridAction(formData: FormData) {
-  const { organizationId, userId } = await resolveWritableOrganization(formData);
-
-  const scenarioId = String(formData.get("scenario_id") ?? "").trim();
-  const customerId = String(formData.get("customer_id") ?? "").trim();
-  const productId = String(formData.get("product_id") ?? "").trim();
-  const variantIdRaw = String(formData.get("product_variant_id") ?? "").trim();
-  const year = Number(String(formData.get("year") ?? "").trim());
-
-  if (!scenarioId || !customerId || !productId || !Number.isInteger(year)) {
-    throw new Error("Scenario, customer, product, and year are required.");
+async function masterMutation(operation: () => Promise<void | {id:string}>): Promise<MutationResult> {
+  try { const saved=await operation(); return {ok:true,...saved}; }
+  catch(error) {
+    // Preserve framework auth interrupts; do not downgrade failed authorization.
+    if (error && typeof error === "object" && "digest" in error) return {ok:false,code:"FORBIDDEN",message:"You cannot change these sales records."};
+    if (error instanceof SalesValidationError) return {ok:false,code:"VALIDATION_ERROR",message:error.message};
+    const dbCode = error && typeof error === "object" && "databaseCode" in error ? String(error.databaseCode) : "";
+    const code = dbCode === "23505" ? "CONFLICT" : dbCode === "42501" ? "FORBIDDEN"
+      : dbCode === "P0002" || dbCode === "PGRST116" ? "NOT_FOUND" : dbCode.startsWith("23") ? "VALIDATION_ERROR" : "DATABASE_ERROR";
+    console.error("[sales][master-mutation]",error);
+    return {ok:false,code,message:code === "CONFLICT" ? "A record with this name or code already exists." : "The change could not be saved. Check the values and your organization access."};
   }
-
-  await upsertMonthlyFacts({
-    formData,
-    scenarioId,
-    organizationId,
-    userId,
-    year,
-    customerId,
-    productId,
-    variantId: variantIdRaw || null,
-  });
-
-  revalidatePath("/sales");
-  revalidatePath("/sales/planning");
-  revalidatePath("/sales/actuals");
-  revalidatePath("/sales/customers");
-  revalidatePath("/sales/products");
 }
-
-export async function upsertActualsGridAction(formData: FormData) {
-  const { organizationId, userId } = await resolveWritableOrganization(formData);
-  const customerId = String(formData.get("customer_id") ?? "").trim();
-  const productId = String(formData.get("product_id") ?? "").trim();
-  const variantIdRaw = String(formData.get("product_variant_id") ?? "").trim();
-  const year = Number(String(formData.get("year") ?? "").trim());
-
-  if (!customerId || !productId || !Number.isInteger(year)) {
-    throw new Error("Customer, product, and year are required.");
-  }
-
-  const actualScenario = await getScenarioByCode(organizationId, "ACTUAL");
-  if (!actualScenario) {
-    throw new Error("ACTUAL scenario is missing for selected organization.");
-  }
-
-  await upsertMonthlyFacts({
-    formData,
-    scenarioId: actualScenario.id,
-    organizationId,
-    userId,
-    year,
-    customerId,
-    productId,
-    variantId: variantIdRaw || null,
-  });
-
-  revalidatePath("/sales");
-  revalidatePath("/sales/actuals");
-  revalidatePath("/sales/customers");
-  revalidatePath("/sales/products");
-}
+export async function createCustomerAction(formData: FormData) { return masterMutation(() => createCustomer(formData)); }
+export async function updateCustomerAction(formData: FormData) { return masterMutation(() => updateCustomer(formData)); }
+export async function toggleCustomerActiveAction(formData: FormData) { return masterMutation(() => toggleCustomerActive(formData)); }
+export async function createProductAction(formData: FormData) { return masterMutation(() => createProduct(formData)); }
+export async function updateProductAction(formData: FormData) { return masterMutation(() => updateProduct(formData)); }
+export async function toggleProductActiveAction(formData: FormData) { return masterMutation(() => toggleProductActive(formData)); }
+export async function createVariantAction(formData: FormData) { return masterMutation(() => createVariant(formData)); }

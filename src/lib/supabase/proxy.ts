@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnv } from "./env";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
@@ -34,10 +35,7 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase.auth);
 
   if (process.env.NODE_ENV === "development") {
     const cookieNames = request.cookies.getAll().map((cookie) => cookie.name);
@@ -48,7 +46,6 @@ export async function updateSession(request: NextRequest) {
     console.info("[auth][proxy] getUser_result", {
       hasUser: Boolean(user),
       hasAuthCookie: hasSupabaseAuthCookie,
-      hasError: Boolean(error),
     });
   }
 

@@ -1,5 +1,6 @@
 export type SalesSearchParams = {
   org?: string;
+  page?: string;
   q?: string;
   year?: string;
   scenario?: string;

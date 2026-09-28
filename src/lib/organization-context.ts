@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 
 import { cookies } from "next/headers";
 import { forbidden } from "next/navigation";
@@ -18,7 +19,7 @@ export type OrganizationContext = {
   selectedOrganization: OrganizationOption | null;
 };
 
-export async function getOrganizationContext(): Promise<OrganizationContext> {
+export const getOrganizationContext = cache(async (): Promise<OrganizationContext> => {
   const context = await requireProfile();
 
   if (!context.profile.is_system_admin) {
@@ -67,4 +68,4 @@ export async function getOrganizationContext(): Promise<OrganizationContext> {
     selectedOrganizationId: selectedOrganization?.id ?? null,
     selectedOrganization,
   };
-}
+});
