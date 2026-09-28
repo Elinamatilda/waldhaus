@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Dialog, EmptyState, FormField, Input, Select, SectionHeader, StatusBadge, Table, TableBody, TableCell, TableHeader, TableRow, Textarea } from '@/components/ui';
+import { Button, Card, Checkbox, MultiCheckboxSelect, Dialog, EmptyState, FormField, Input, Select, SectionHeader, StatusBadge, Table, TableBody, TableCell, TableHeader, TableRow, Textarea } from '@/components/ui';
 import { ProductSpeciesSelector } from './product-species-selector';
 import { SalesMutationForm } from './mutation-form';
 import { saveProductMasterAction } from '@/app/actions/product-master';
 import { MASTER_FIELDS, PRICE_UNITS, PRODUCT_UNITS, type MasterEntity } from '@/lib/products/model';
 import type { MasterRow } from '@/lib/products/service';
-import type { CommercialTermDefinition, ProductMasterDefinition, ProductVariantDefinition } from '@/lib/products/read-model';
+import type { CommercialTermDefinition, CustomerProductDefinition, ProductMasterDefinition, ProductVariantDefinition } from '@/lib/products/read-model';
 import { tApp, type AppMessageKey } from '@/lib/i18n/app-ui';
 import { tProduct } from '@/lib/i18n/product-master-ui';
 import type { AppLocale } from '@/lib/i18n/config';
@@ -17,7 +17,7 @@ import type { MutationResult } from '@/lib/sales/validation';
 
 type Lookups = {wood_species: MasterRow[]; construction_types: MasterRow[]};
 type EditRow = Record<string, unknown> & {id: string; edit_version: string};
-type Editor = {entity: MasterEntity; row: EditRow | null; parentId?: string; archive?: boolean};
+type Editor = {entity: MasterEntity; row: EditRow | null; parentId?: string; archive?: boolean; customerLinks?: CustomerProductDefinition[]};
 
 // Form adapters flatten only the write fields. The canonical read model owns all joins and geometry.
 const variantFields = (variant: ProductVariantDefinition): EditRow => ({...variant, ...variant.dimensions});
@@ -31,6 +31,7 @@ export function ProductMasterManager({organizationId, locale, definition, lookup
   const router = useRouter();
   const [refreshing, startRefresh] = useTransition();
   const [dialog, setDialog] = useState<Editor | null>(null);
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [variantDraft, setVariantDraft] = useState<Record<string, string>>({});
   const label = (key: string) => tApp(locale, `productMaster.${key}` as AppMessageKey);
   const text = (key: Parameters<typeof tProduct>[1]) => tProduct(locale, key);
@@ -38,8 +39,13 @@ export function ProductMasterManager({organizationId, locale, definition, lookup
   const variant = definition.variants.find(row => row.id === variantId);
   const base = `/sales/products/${product.id}`;
   const open = (entity: MasterEntity, row: EditRow | null, parentId?: string) => {
-    setVariantDraft({}); setDialog({entity, row, parentId});
+    const customerLinks = entity === 'product_variants' ? definition.variants.find(item => item.id === row?.id)?.related.customer_products ?? [] : undefined;
+    setSelectedCustomers(customerLinks?.filter(link => link.is_active).map(link => link.customer_id) ?? []);
+    setVariantDraft({}); setDialog({entity, row, parentId, customerLinks});
   };
+  const customerLinks = dialog?.customerLinks ?? [];
+  const removedCustomers = customerLinks.filter(link => link.is_active && !selectedCustomers.includes(link.customer_id));
+  const reactivatedCustomers = customerLinks.filter(link => !link.is_active && selectedCustomers.includes(link.customer_id));
   const status = (active: boolean) => <StatusBadge status={active ? 'success' : 'neutral'}>{label(active ? 'active' : 'archived')}</StatusBadge>;
   const actions = (entity: MasterEntity, row: EditRow) => <div className="flex flex-wrap gap-2">
     <Button variant="secondary" disabled={refreshing} onClick={() => open(entity, row)}>{label('edit')}</Button>
@@ -79,10 +85,11 @@ export function ProductMasterManager({organizationId, locale, definition, lookup
         <SectionHeader title={text('variants')} actions={<Button disabled={refreshing || !product.is_active} onClick={() => open('product_variants', null)}>{text('addVariant')}</Button>} />
         {!product.is_active ? <p>{text('inactiveParent')}</p> : null}
         {!definition.variants.length ? <EmptyState title={label('empty')} description={text('emptyVariants')} /> : <div className="overflow-x-auto">
-          <Table><TableHeader><tr><th className="px-4 py-3 text-left">{label('variant_name')}</th><th className="px-4 py-3 text-left">{text('specification')}</th><th className="px-4 py-3 text-left">{label('is_active')}</th><th className="px-4 py-3 text-left">{text('actions')}</th></tr></TableHeader><TableBody>
+          <Table><TableHeader><tr><th className="px-4 py-3 text-left">{label('variant_name')}</th><th className="px-4 py-3 text-left">{text('specification')}</th><th className="px-4 py-3 text-left">{text('customers')}</th><th className="px-4 py-3 text-left">{label('is_active')}</th><th className="px-4 py-3 text-left">{text('actions')}</th></tr></TableHeader><TableBody>
             {definition.variants.map(row => <TableRow key={row.id}>
               <TableCell><Link className="text-primary hover:underline" href={`${base}/variants/${row.id}`}>{row.variant_name ?? row.variant_code}</Link><p className="text-body-small text-text-secondary">{row.variant_code}</p></TableCell>
               <TableCell>{row.wood_species?.name ?? '—'} · {row.construction_type?.name ?? '—'}<p>{dimensions(row)}</p></TableCell>
+              <TableCell>{row.related.customer_products.filter(link => link.is_active).map(link => link.customer.name).join(', ') || '—'}</TableCell>
               <TableCell>{status(row.is_active)}</TableCell><TableCell>{actions('product_variants', variantFields(row))}</TableCell>
             </TableRow>)}
           </TableBody></Table>
@@ -135,6 +142,21 @@ export function ProductMasterManager({organizationId, locale, definition, lookup
         {dialog.archive ? <><input type="hidden" name="operation" value="archive" /><input type="hidden" name="confirmed" value="true" /></> : <>
           {dialog.entity === 'product_variants' ? <p className="text-body-small text-text-secondary">{text('immutable')}</p> : null}
           {dialog.entity === 'customer_product_terms' ? <p className="text-body-small text-text-secondary">{label('termsGuidance')} {text('notOrders')}</p> : null}
+          {dialog.entity === 'product_variants' ? <>
+            <input type="hidden" name="customer_selection_present" value="true" />
+            <input type="hidden" name="expected_customer_links" value={JSON.stringify(customerLinks.map(link => ({id: link.id, edit_version: link.edit_version})))} />
+            <FormField label={text('customers')} htmlFor="variant-customers" help={text('variantCustomersHint')}>
+              <MultiCheckboxSelect id="variant-customers" name="customer_ids" label={text('customers')} placeholder={text('selectVariantCustomers')} emptyLabel={text('noSelectableCustomers')}
+                options={customers.filter(customer => customer.is_active || customerLinks.some(link => link.customer_id === customer.id && link.is_active))
+                  .map(customer => ({id: customer.id, name: customer.is_active ? customer.name : `${customer.name} · ${label('archived')}`}))}
+                value={selectedCustomers} onChange={setSelectedCustomers} />
+            </FormField>
+            {reactivatedCustomers.length ? <p className="text-body-small text-text-secondary">{text('reactivateCustomersHint')}</p> : null}
+            {removedCustomers.length ? <label className="flex items-start gap-3 text-body-small">
+              <Checkbox name="confirm_customer_archive" value="true" required />
+              <span>{text('confirmCustomerArchive').replace('{customers}', removedCustomers.map(link => link.customer.name).join(', '))}</span>
+            </label> : null}
+          </> : null}
           {Object.entries(MASTER_FIELDS[dialog.entity]).map(([key, kind]) => {
             const parent = key === 'product_id' ? product.id : ['product_variant_id', 'customer_product_id'].includes(key) ? String(dialog.row?.[key] ?? dialog.parentId) : null;
             if (parent) return <input key={key} type="hidden" name={key} value={parent} />;

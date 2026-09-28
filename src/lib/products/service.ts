@@ -87,6 +87,30 @@ export async function saveProductMaster(organizationId:string,entity:MasterEntit
   return masterSaved(result.data);
 }
 export const createProductVariant=(org:string,data:unknown)=>saveProductMaster(org,'product_variants',null,null,data);
+export async function saveProductVariantCustomers(org:string,id:string|null,expectedVersion:string|null,payload:unknown,
+  expectedLinks:unknown,customerIds:unknown[],confirmArchive:boolean) {
+  await requireProductOrganization(org);
+  const data=parseMasterPayload('product_variants',payload);
+  const recordId=identifier(id,true),version=versionInput(expectedVersion);
+  if((recordId===null)!==(version===null))throw new ProductInputError('Invalid variant version');
+  if(!Array.isArray(customerIds)||customerIds.length>100||!Array.isArray(expectedLinks)||expectedLinks.length>100||typeof confirmArchive!=='boolean')throw new ProductInputError('Invalid customer selection');
+  const selected=customerIds.map(value=>identifier(value)!);
+  const expected=expectedLinks.map(value=>{
+    if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(key=>!['id','edit_version'].includes(key)))throw new ProductInputError('Invalid relationship version');
+    const row=value as Record<string,unknown>;
+    const linkId=identifier(row.id)!,linkVersion=versionInput(row.edit_version);
+    if(!linkVersion)throw new ProductInputError('Missing relationship version');
+    return {id:linkId,edit_version:linkVersion};
+  });
+  if(new Set(selected).size!==selected.length||new Set(expected.map(row=>row.id)).size!==expected.length||(!recordId&&expected.length))throw new ProductInputError('Invalid customer selection');
+  const db=await createClient();
+  const {data:saved,error}=await db.rpc('save_product_variant_customers',{
+    p_organization:org,p_id:recordId,p_expected_version:version,p_data:data,
+    p_expected_links:expected,p_customer_ids:selected,p_confirm_archive:confirmArchive,
+  });
+  if(error)throw Object.assign(new Error('Variant and customer save failed'),{databaseCode:error.code});
+  return masterSaved(saved);
+}
 export const updateProductVariant=(org:string,id:string,version:string,data:unknown)=>saveProductMaster(org,'product_variants',id,version,data);
 export const listProductVariants=(org:string,productId?:string)=>listProductMasters(org,'product_variants',productId?{product_id:productId}:undefined);
 export const getProductVariant=(org:string,id:string)=>getProductMaster(org,'product_variants',id);

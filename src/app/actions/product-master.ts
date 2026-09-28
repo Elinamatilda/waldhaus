@@ -4,7 +4,7 @@ import { getRequestLocale } from '@/lib/i18n/locale';
 import { tApp } from '@/lib/i18n/app-ui';
 import { tProduct } from '@/lib/i18n/product-master-ui';
 import { MASTER_FIELDS, ProductInputError, type MasterEntity } from '@/lib/products/model';
-import { archiveProductMaster, saveProductMaster, saveProductWoodSpecies } from '@/lib/products/service';
+import { archiveProductMaster, saveProductMaster, saveProductWoodSpecies, saveProductVariantCustomers } from '@/lib/products/service';
 import type { MutationResult } from '@/lib/sales/validation';
 
 export async function saveProductWoodSpeciesAction(form:FormData):Promise<MutationResult> {
@@ -40,7 +40,15 @@ export async function saveProductMasterAction(form:FormData):Promise<MutationRes
         if(!form.has(key))throw new ProductInputError('Missing input');
         const raw=form.get(key);data[key]=kind==='boolean'?(raw==='true'?true:raw==='false'?false:raw):raw===''?null:raw;
       }
-      const saved=await saveProductMaster(org,entity,id,version,data);
+      let saved;
+      if(entity==='product_variants'&&form.get('customer_selection_present')==='true'){
+        let expected:unknown;
+        try { expected=JSON.parse(String(form.get('expected_customer_links')??'')); }
+        catch { throw new ProductInputError('Invalid relationship versions'); }
+        saved=await saveProductVariantCustomers(org,id,version,data,expected,form.getAll('customer_ids'),form.get('confirm_customer_archive')==='true');
+      }else{
+        saved=await saveProductMaster(org,entity,id,version,data);
+      }
       revalidatePath('/sales/products','layout');revalidatePath('/sales/customers','layout');revalidatePath('/budget/sales');revalidatePath('/sales/actuals');
       return {ok:true,id:saved.id};
     }
@@ -50,6 +58,6 @@ export async function saveProductMasterAction(form:FormData):Promise<MutationRes
     const dbCode=error&&typeof error==='object'&&'databaseCode' in error?String(error.databaseCode):'';
     const authInterrupt=error&&typeof error==='object'&&'digest' in error;
     const code=authInterrupt||dbCode==='42501'?'FORBIDDEN':['40001','23505','40P01'].includes(dbCode)?'CONFLICT':error instanceof ProductInputError||dbCode.startsWith('22')||dbCode.startsWith('23')?'VALIDATION_ERROR':'DATABASE_ERROR';
-    return {ok:false,code,message:tApp(locale,code==='FORBIDDEN'?'productMaster.forbidden':code==='CONFLICT'?'productMaster.conflict':code==='VALIDATION_ERROR'?'productMaster.invalid':'productMaster.failed')};
+    return {ok:false,code,message:form.get('customer_selection_present')==='true'&&['PGRST202','42883'].includes(dbCode)?tProduct(locale,'variantCustomersUnavailable'):tApp(locale,code==='FORBIDDEN'?'productMaster.forbidden':code==='CONFLICT'?'productMaster.conflict':code==='VALIDATION_ERROR'?'productMaster.invalid':'productMaster.failed')};
   }
 }

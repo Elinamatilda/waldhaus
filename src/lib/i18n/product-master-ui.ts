@@ -1,6 +1,12 @@
 import type { AppLocale } from './config';
 
 const en = {
+  selectVariantCustomers: "Select customer(s)",
+  variantCustomersHint: "Choose the customer for this variant. You can select more than one or leave it unassigned. Commercial terms are managed on the variant detail.",
+  noSelectableCustomers: "No active customers. Add the customer in Sales → Customers first.",
+  confirmCustomerArchive: "Archive these customer relationships: {customers}. Terms and history are retained, but the relationships are no longer active.",
+  reactivateCustomersHint: "Selecting an archived relationship reactivates it and its existing effective terms.",
+  variantCustomersUnavailable: "Saving the variant and customers together requires the variant_customer_selection migration. Nothing was saved.",
   selectSpecies: "Select wood species",
   productSpeciesHint: "Select the species offered for this product, for example oak and birch thresholds. This does not create variants or combine species.",
   noProductSpecies: "No wood species selected for this product yet.",
@@ -32,6 +38,12 @@ type Key = keyof typeof en;
 const messages: Record<AppLocale, Record<Key, string>> = {
   en,
   fi: {
+  selectVariantCustomers: "Valitse asiakas tai asiakkaat",
+  variantCustomersHint: "Valitse tämän variantin asiakas. Voit valita tarvittaessa useita tai jättää asiakkaan valitsematta. Kaupalliset ehdot määritetään variantin tiedoissa.",
+  noSelectableCustomers: "Aktiivisia asiakkaita ei ole. Lisää asiakas ensin kohdassa Myynti → Asiakkaat.",
+  confirmCustomerArchive: "Arkistoi nämä asiakassuhteet: {customers}. Ehdot ja historia säilyvät, mutta suhteet eivät enää ole aktiivisia.",
+  reactivateCustomersHint: "Arkistoidun asiakassuhteen valinta aktivoi sen uudelleen, jolloin myös sen voimassa olevat ehdot tulevat käyttöön.",
+  variantCustomersUnavailable: "Variantin ja asiakkaiden yhteistallennus edellyttää variant_customer_selection-migraatiota. Mitään ei tallennettu.",
   selectSpecies: "Valitse puulajit",
   productSpeciesHint: "Valitse, mitä puulajeja tästä tuotteesta on tarjolla, esimerkiksi tammi- ja koivukynnyksiä. Valinta ei luo variantteja eikä yhdistä puulajeja.",
   noProductSpecies: "Tälle tuotteelle ei ole vielä valittu puulajeja.",
@@ -60,6 +72,12 @@ const messages: Record<AppLocale, Record<Key, string>> = {
     effectiveDate: 'Tarkastelupäivä', variantCount: 'Variantit (myös arkistoidut)',
   },
   pl: {
+  selectVariantCustomers: "Wybierz klienta lub klientów",
+  variantCustomersHint: "Wybierz klienta dla tego wariantu. Możesz wybrać kilku lub pozostawić wariant bez klienta. Warunki handlowe określa się w szczegółach wariantu.",
+  noSelectableCustomers: "Brak aktywnych klientów. Najpierw dodaj klienta w Sprzedaż → Klienci.",
+  confirmCustomerArchive: "Zarchiwizuj relacje z klientami: {customers}. Warunki i historia pozostaną zachowane, ale relacje nie będą już aktywne.",
+  reactivateCustomersHint: "Wybranie zarchiwizowanej relacji aktywuje ją ponownie wraz z jej obowiązującymi warunkami.",
+  variantCustomersUnavailable: "Wspólny zapis wariantu i klientów wymaga migracji variant_customer_selection. Nie zapisano żadnych zmian.",
   selectSpecies: "Wybierz gatunki drewna",
   productSpeciesHint: "Wybierz gatunki oferowane dla tego produktu, np. progi dębowe i brzozowe. Wybór nie tworzy wariantów ani nie miesza gatunków.",
   noProductSpecies: "Nie wybrano jeszcze gatunków drewna dla tego produktu.",
