@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Card, Checkbox, MultiCheckboxSelect, Dialog, EmptyState, FormField, Input, Select, SectionHeader, StatusBadge, Table, TableBody, TableCell, TableHeader, TableRow, Textarea } from '@/components/ui';
+import { suggestVariantName } from '@/lib/products/variant-naming';
 import { ProductSpeciesSelector } from './product-species-selector';
 import { SalesMutationForm } from './mutation-form';
 import { saveProductMasterAction } from '@/app/actions/product-master';
@@ -71,6 +72,14 @@ export function ProductMasterManager({organizationId, locale, definition, lookup
   const similar = dialog?.entity === 'product_variants' && !dialog.row && ['thickness_mm', 'width_mm', 'length_mm'].every(key => variantDraft[key]) && definition.variants.some(row =>
     ['thickness_mm', 'width_mm', 'length_mm'].every(key => Number(row.dimensions[key as keyof typeof row.dimensions]) === Number(variantDraft[key])) &&
     ['wood_species_id', 'construction_type_id'].every(key => (row[key as 'wood_species_id'] ?? '') === (variantDraft[key] ?? '')));
+  const creatingVariant = dialog?.entity === 'product_variants' && !dialog.row && !dialog.archive;
+  const namingLookup = (rows: MasterRow[], id: string) => {
+    const row = rows.find(item => item.id === id);
+    return row ? {code: String(row.code), name: String(row[`name_${locale}`])} : null;
+  };
+  const suggested = creatingVariant ? suggestVariantName(product, namingLookup(lookups.wood_species, variantDraft.wood_species_id), namingLookup(lookups.construction_types, variantDraft.construction_type_id), variantDraft) : null;
+  const duplicateCode = !!suggested && definition.variants.some(row => row.variant_code === suggested.code);
+  const namingBlocked = creatingVariant && (!suggested?.valid || duplicateCode);
   const termSummary = (term: CommercialTermDefinition) => <div className="space-y-2">
     <p className="text-body"><span className="text-text-secondary">{text('expectedDemand')}: </span>{term.demand_quantity === null ? '—' : `${decimal(term.demand_quantity)} ${term.demand_unit?.name ?? '—'} / ${label(term.demand_period ?? 'none')} (${term.demand_year})`}</p>
     <p className="text-body"><span className="text-text-secondary">{label('unit_price_amount')}: </span>{term.unit_price_amount === null ? '—' : `${decimal(term.unit_price_amount)} ${term.currency_code} / ${label(PRICE_UNITS[term.pricing_basis_code as keyof typeof PRICE_UNITS])}`}</p>
@@ -157,12 +166,12 @@ export function ProductMasterManager({organizationId, locale, definition, lookup
               <span>{text('confirmCustomerArchive').replace('{customers}', removedCustomers.map(link => link.customer.name).join(', '))}</span>
             </label> : null}
           </> : null}
-          {Object.entries(MASTER_FIELDS[dialog.entity]).map(([key, kind]) => {
+          {Object.entries(MASTER_FIELDS[dialog.entity]).filter(([key]) => !creatingVariant || !['variant_code', 'variant_name'].includes(key)).map(([key, kind]) => {
             const parent = key === 'product_id' ? product.id : ['product_variant_id', 'customer_product_id'].includes(key) ? String(dialog.row?.[key] ?? dialog.parentId) : null;
             if (parent) return <input key={key} type="hidden" name={key} value={parent} />;
             const value = dialog.row?.[key] ?? (key === 'is_active' ? true : '');
             const choices = options(key);
-            const required = kind === 'required' || kind.endsWith('_required');
+            const required = kind === 'required' || kind.endsWith('_required') || (creatingVariant && ['wood_species_id', 'thickness_mm', 'width_mm', 'length_mm'].includes(key));
             const immutable = !!dialog.row && ['code', 'variant_code', 'customer_id'].includes(key);
             // Archive is always a separate confirmation; this control can only reactivate history.
             if (key === 'is_active' && value === true) return <input key={key} type="hidden" name={key} value="true" />;
@@ -173,9 +182,15 @@ export function ProductMasterManager({organizationId, locale, definition, lookup
                     <Input id={`master-${key}`} name={key} type={kind.startsWith('date') ? 'date' : 'text'} inputMode={['numeric', 'dimension', 'year'].includes(kind) ? 'decimal' : undefined} defaultValue={String(value)} readOnly={immutable} required={required} onChange={event => setVariantDraft(old => ({...old, [key]: event.target.value}))} />}
             </FormField>;
           })}
+          {creatingVariant ? <div className="space-y-3" aria-live="polite">
+            <p className="text-body-small text-text-secondary">{text('automaticVariantName')}</p>
+            <FormField label={label('variant_code')} htmlFor="generated-variant-code"><Input id="generated-variant-code" name="variant_code" value={suggested?.code ?? ''} readOnly /></FormField>
+            <FormField label={label('variant_name')} htmlFor="generated-variant-name"><Input id="generated-variant-name" name="variant_name" value={suggested?.name ?? ''} readOnly /></FormField>
+            {!suggested ? <p>{text('variantNamingIncomplete')}</p> : !suggested.valid ? <p role="alert">{text('variantNamingTooLong')}</p> : duplicateCode ? <p role="alert">{text('variantCodeExists')}</p> : null}
+          </div> : null}
         </>}
         {similar ? <p role="status">{label('duplicate')}</p> : null}
-        <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => setDialog(null)}>{label('cancel')}</Button><Button type="submit">{label(dialog.archive ? 'archive' : 'save')}</Button></div>
+        <div className="flex justify-end gap-3"><Button variant="secondary" type="button" onClick={() => setDialog(null)}>{label('cancel')}</Button><Button type="submit" disabled={namingBlocked}>{label(dialog.archive ? 'archive' : 'save')}</Button></div>
       </SalesMutationForm> : null}
     </Dialog>
   </div>;

@@ -57,21 +57,37 @@ test('empty product remains actionable, archived product cannot add active varia
 });
 
 test('nested editors bind parent ids, preserve version tokens and exclude legacy physical fields',()=>{
- function editorHtml(editor){
+ function editorHtml(editor, draft = {}, editorLookups = lookups, editorDefinition = definition){
   const Editor=loadModule('src/components/sales/product-master-manager.tsx',{
-   react:{...React,useTransition:()=>[false,()=>{}],useState:initial=>[initial===null?editor:initial,()=>{}]},
+   react:{...React,useTransition:()=>[false,()=>{}],useState:initial=>[initial===null?editor:!Array.isArray(initial) && typeof initial === 'object'?draft:initial,()=>{}]},
    'next/navigation':{useRouter:()=>({refresh(){}})},'next/link':component('a'),
    './product-species-selector':{ProductSpeciesSelector:()=>null},
  './mutation-form':{SalesMutationForm:({children})=>React.createElement('form',null,children)},
    '@/app/actions/product-master':{saveProductMasterAction:async()=>({ok:true})},
    '@/components/ui':{...ui,Dialog:({open,children})=>open?React.createElement('section',null,children):null,FormField:({children})=>React.createElement('div',null,children)},
   }).ProductMasterManager;
-  return renderToStaticMarkup(React.createElement(Editor,{organizationId:'o',locale:'en',definition,lookups,customers:[{id:'c',name:'Customer',is_active:true}],variantId:'v'}));
+  return renderToStaticMarkup(React.createElement(Editor,{organizationId:'o',locale:'en',definition:editorDefinition,lookups:editorLookups,customers:[{id:'c',name:'Customer',is_active:true}],variantId:'v'}));
  }
  const physical=editorHtml({entity:'product_variants',row:null});
+ assert.match(physical, /id="generated-variant-code"[^>]*readOnly/);
+ assert.match(physical, /type="submit" disabled/);
+ const existing=editorHtml({entity:'product_variants',row:variant},{thickness_mm:'99'});
+ assert.ok(existing.includes('value="P-2450"'));
+ assert.ok(existing.includes('value="Moulding"'));
+ assert.ok(!existing.includes('generated-variant-code'));
  assert.ok(physical.includes('name="product_id" value="p"'));
  for(const field of ['wood_species_id','construction_type_id','thickness_mm','width_mm','length_mm','default_quantity_unit_code'])assert.ok(physical.includes(`name="${field}"`));
  for(const field of ['customer_id','depth_mm','volume_per_unit_m3','unit_price_amount'])assert.ok(!physical.includes(`name="${field}"`));
+ const completeDraft={wood_species_id:'oak-id',construction_type_id:'solid-id',thickness_mm:'27',width_mm:'130',length_mm:'3000'};
+ const catalog={wood_species:[{id:'oak-id',code:'oak',name_en:'Oak',is_active:true}],construction_types:[{id:'solid-id',code:'solid',name_en:'Solid',is_active:true}]};
+ const productDefinition={...definition,product:{...definition.product,product_code:'THRESHOLD'}};
+ const complete=editorHtml({entity:'product_variants',row:null},completeDraft,catalog,productDefinition);
+ assert.match(complete.match(/<input[^>]*id="generated-variant-code"[^>]*>/)?.[0] ?? "", /value="THRESHOLD-OAK-SOLID-27X130X3000"/);
+ assert.ok(complete.includes('Mouldings, Oak, Solid, 27 × 130 × 3000 mm'));
+ assert.ok(!complete.includes('type="submit" disabled'));
+ const duplicate=editorHtml({entity:'product_variants',row:null},completeDraft,catalog,{...productDefinition,variants:[{...variant,is_active:false,variant_code:'THRESHOLD-OAK-SOLID-27X130X3000'}]});
+ assert.ok(duplicate.includes(tProduct('en','variantCodeExists')));
+ assert.ok(duplicate.includes('type="submit" disabled'));
  const customer=editorHtml({entity:'customer_products',row:null,parentId:'v'});
  assert.ok(customer.includes('name="product_variant_id" value="v"'));
  assert.ok(customer.includes('name="customer_id"'));

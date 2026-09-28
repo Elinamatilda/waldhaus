@@ -1,6 +1,11 @@
 import type { AppLocale } from './config';
 
 const en = {
+  automaticVariantName: 'Code and name are generated from the product and specification. Dimensions: thickness × width × length. The saved code is permanent; customers do not affect it.',
+  variantNamingIncomplete: 'Select a wood species and enter all three positive dimensions to generate the code and name.',
+  variantNamingTooLong: 'The generated code or name is too long (maximum 80 / 200 characters). Shorten the product code, name or classification values.',
+  variantCodeExists: 'This variant code already exists, possibly archived. Open the existing variant to link customers or reactivate it.',
+
   selectVariantCustomers: "Select customer(s)",
   variantCustomersHint: "Choose the customer for this variant. You can select more than one or leave it unassigned. Commercial terms are managed on the variant detail.",
   noSelectableCustomers: "No active customers. Add the customer in Sales → Customers first.",
@@ -38,6 +43,11 @@ type Key = keyof typeof en;
 const messages: Record<AppLocale, Record<Key, string>> = {
   en,
   fi: {
+  automaticVariantName: 'Koodi ja nimi muodostuvat tuotteesta ja tuotemäärityksestä. Mitat: paksuus × leveys × pituus. Tallennettu koodi on pysyvä; asiakasvalinta ei vaikuta siihen.',
+  variantNamingIncomplete: 'Valitse puulaji ja syötä kaikki kolme positiivista mittaa, niin koodi ja nimi muodostuvat automaattisesti.',
+  variantNamingTooLong: 'Muodostuva koodi tai nimi on liian pitkä (enintään 80 / 200 merkkiä). Lyhennä tuotteen koodia, nimeä tai luokitustietoja.',
+  variantCodeExists: 'Tämä varianttikoodi on jo olemassa, mahdollisesti arkistoituna. Avaa nykyinen variantti asiakkaiden liittämistä tai uudelleenaktivointia varten.',
+
   selectVariantCustomers: "Valitse asiakas tai asiakkaat",
   variantCustomersHint: "Valitse tämän variantin asiakas. Voit valita tarvittaessa useita tai jättää asiakkaan valitsematta. Kaupalliset ehdot määritetään variantin tiedoissa.",
   noSelectableCustomers: "Aktiivisia asiakkaita ei ole. Lisää asiakas ensin kohdassa Myynti → Asiakkaat.",
@@ -72,6 +82,11 @@ const messages: Record<AppLocale, Record<Key, string>> = {
     effectiveDate: 'Tarkastelupäivä', variantCount: 'Variantit (myös arkistoidut)',
   },
   pl: {
+  automaticVariantName: 'Kod i nazwa powstają z produktu i specyfikacji. Wymiary: grubość × szerokość × długość. Zapisany kod jest stały; wybór klientów go nie zmienia.',
+  variantNamingIncomplete: 'Wybierz gatunek drewna i podaj wszystkie trzy dodatnie wymiary, aby wygenerować kod i nazwę.',
+  variantNamingTooLong: 'Wygenerowany kod lub nazwa jest za długa (maksymalnie 80 / 200 znaków). Skróć kod produktu, nazwę lub wartości klasyfikacji.',
+  variantCodeExists: 'Ten kod wariantu już istnieje, być może w archiwum. Otwórz istniejący wariant, aby powiązać klientów lub go aktywować.',
+
   selectVariantCustomers: "Wybierz klienta lub klientów",
   variantCustomersHint: "Wybierz klienta dla tego wariantu. Możesz wybrać kilku lub pozostawić wariant bez klienta. Warunki handlowe określa się w szczegółach wariantu.",
   noSelectableCustomers: "Brak aktywnych klientów. Najpierw dodaj klienta w Sprzedaż → Klienci.",
